@@ -1,0 +1,202 @@
+{
+  "main": {
+    "id": "ea37b164d7ef6439",
+    "type": "split",
+    "children": [
+      {
+        "id": "11216a6e794e91d4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4e6237bb1057afb2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Tools/git/清理历史重置仓库.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "清理历史重置仓库"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "93c0342753179877",
+    "type": "split",
+    "children": [
+      {
+        "id": "af61e9c3c119ee7f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fba73bb25e86974a",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "ad93837987881597",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "3c5560e7807e1a3e",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "947486a243ca2a39",
+    "type": "split",
+    "children": [
+      {
+        "id": "1743f3513c16eed5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e6656031d1977e34",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "反向链接"
+            }
+          },
+          {
+            "id": "f2e1ad74383947da",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "出链"
+            }
+          },
+          {
+            "id": "d13b1e3581ff0f36",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "634d00c8b6c48e1a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "d254ea1e4a36e743",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "4e6237bb1057afb2",
+  "lastOpenFiles": [
+    "Tools/git/tokens和ssh.md",
+    "Tools/git/清理历史重置仓库.md",
+    "Tools/git/多仓库处理.md",
+    "book/未命名.md",
+    "Tools/git",
+    "project-management-professional-pmp.png",
+    "book/computer/编译原理 原理、技术与工具 ( etc.) (Z-Library).pdf",
+    "book/project-management-professional-pmp.png",
+    "book/computer/深入理解计算机系统 (Randal E. Bryant, David R. O’Hallaron) (Z-Library).pdf",
+    "book/computer/计算机组成原理 (艾伦·克莱门茨 (Alan Clements)) (Z-Library).pdf",
+    "book/computer/计算机科学导论 - 原书第3版 (贝赫鲁兹·佛罗赞) (Z-Library).pdf",
+    "book/computer/算法导论 第三版 可复制 有目录 (Thmos.H.Cormen ,Charles E. Leiserson etc.) (Z-Library).pdf",
+    "book/computer/现代操作系统 (Andrew S. Tanenbaum, Herbert Bos) (Z-Library).pdf",
+    "book/computer/数据密集型应用系统设计 (Martin Kleppmann) (Z-Library).pdf",
+    "book/computer",
+    "book"
+  ]
+}
