@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Tools/git/清理历史重置仓库.md",
+                "file": "Tools/git/git提交变更.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "清理历史重置仓库"
+              "title": "git提交变更"
             }
           }
         ]
@@ -182,9 +182,18 @@
   },
   "active": "4e6237bb1057afb2",
   "lastOpenFiles": [
-    "Tools/git/tokens和ssh.md",
-    "Tools/git/清理历史重置仓库.md",
     "Tools/git/多仓库处理.md",
+    "Tools/git/git提交变更.md",
+    "Tools/终端/iTerm2/修改主题.md",
+    "Tools/终端/nano/nano.md",
+    "Tools/终端/iTerm2/iTerm2插件.md",
+    "Tools/终端/nano",
+    "Tools/终端/iTerm2/iTerm2.md",
+    "Tools/git/清理历史重置仓库.md",
+    "Tools/终端/iTerm2",
+    "Tools/终端",
+    "Tools/未命名.md",
+    "Tools/git/tokens和ssh.md",
     "book/未命名.md",
     "Tools/git",
     "project-management-professional-pmp.png",
@@ -194,9 +203,6 @@
     "book/computer/计算机组成原理 (艾伦·克莱门茨 (Alan Clements)) (Z-Library).pdf",
     "book/computer/计算机科学导论 - 原书第3版 (贝赫鲁兹·佛罗赞) (Z-Library).pdf",
     "book/computer/算法导论 第三版 可复制 有目录 (Thmos.H.Cormen ,Charles E. Leiserson etc.) (Z-Library).pdf",
-    "book/computer/现代操作系统 (Andrew S. Tanenbaum, Herbert Bos) (Z-Library).pdf",
-    "book/computer/数据密集型应用系统设计 (Martin Kleppmann) (Z-Library).pdf",
-    "book/computer",
-    "book"
+    "book/computer/现代操作系统 (Andrew S. Tanenbaum, Herbert Bos) (Z-Library).pdf"
   ]
 }
