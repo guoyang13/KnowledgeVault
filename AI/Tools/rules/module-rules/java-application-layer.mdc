@@ -1,0 +1,59 @@
+---
+description: Application 层：AppService 接口/实现、Assembler 装配器、事务管理（TransactionTemplate）
+globs: **/application/**/*.java
+alwaysApply: false
+---
+
+# Application 层规范
+
+## AppService 接口（`application.<boundedContext>.service` 或 `application.openplatform.service`）
+
+- 方法签名上写 **完整 JavaDoc**（职责说明、核心流程步骤编号、`@param`、`@return`）
+- 直接接收 `api` 层 Request 对象，返回 `api` 层 DTO 对象
+- **写与读可拆**：如 `ReturnOrderAppService`（保存/删除）与 `ReturnOrderQueryAppService`（分页查询），各自对应 Feign 契约与 Controller
+
+## AppServiceImpl 实现（同包 `.impl`）
+
+- `@Service @RequiredArgsConstructor`
+- `@Override` 的 public 方法：JavaDoc **以接口为准**；实现内用与接口步骤编号一致的 **单行注释**（如 `// 1) …`）。若本实现有接口未覆盖的语义（补偿入口、仅实现类可见的跳过条件），可在方法 JavaDoc **末尾追加一小段**说明。
+- **`private` 主流程方法**（如 `runXxx`、`doApply`）：**必须**写完整 JavaDoc（职责、步骤、关键顺序、幂等/事务说明），见 **`project-rules/03-java-comments-and-javadoc.mdc`**。
+- 方法内职责：取上下文 → 参数校验 → 幂等/唯一性检查 → 调用 Assembler 装配 → 事务内持久化 → 组装返回 DTO
+- **禁止**在 AppServiceImpl 内堆长串 `builder`、日期解析等装配细节，须抽到 Assembler
+
+## Assembler 装配器（`application.<boundedContext>.assembler` 或 `application.openplatform.assembler`）
+
+- 简单映射：`@Component`，使用 `BeanCopierUtil.copy` + 少量默认值/合并
+- 复杂装配（需注入 Adapter）：`@Slf4j @Component @RequiredArgsConstructor`，使用 `builder()` 模式
+- **禁止**在 Assembler 内读 `FrameworkContext` 等全局上下文 → 由 AppService 取出后以方法参数传入
+
+典型方法：
+
+| 方法名 | 用途 |
+|--------|------|
+| `toXxx(Request, ...)` | Request → 领域实体（创建） |
+| `mergeXxx(Entity, Request)` | Request 合并到已有实体（更新） |
+| `toXxxDTO(Entity)` | 领域实体 → DTO |
+| `toDomainPageQuery(Request)` | 分页请求 → 领域分页查询 |
+
+## 开放平台推送（请求原样落库）
+
+- 接口约定某些请求字段须与调用方报文一致写入，**禁止** `trim`、大小写转换等改写
+- 枚举/Adapter 解析以**未改写的请求值**为输入；无法映射时**显式失败**，禁止静默规范化
+
+## 事务管理
+
+- **禁止** `@Transactional` 注解
+- 统一注入 `TransactionTemplate`，使用 `executeWithoutResult` 包裹多步写操作：
+
+```java
+transactionTemplate.executeWithoutResult(status -> {
+    repository.save(header);
+    if (CollUtil.isNotEmpty(items)) {
+        itemRepository.saveBatch(items);
+    }
+});
+```
+
+## 关联规则
+
+Request/DTO 定义见 `java-api-contract.mdc`；领域模型见 `java-domain-layer.mdc`；仓储实现见 `java-infrastructure-layer.mdc`。注释、JavaDoc 与必要日志（SLF4J）全仓标准见 **`project-rules/03-java-comments-and-javadoc.mdc`**。

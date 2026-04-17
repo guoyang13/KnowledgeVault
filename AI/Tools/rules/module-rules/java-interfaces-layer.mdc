@@ -1,0 +1,29 @@
+---
+description: Interfaces 层：REST Controller 实现规范（实现 Feign Api、委派 AppService、禁止业务逻辑）
+globs: **/interfaces/**/*.java
+alwaysApply: false
+---
+
+# Interfaces 层规范
+
+## Controller
+
+- `@RestController @RequiredArgsConstructor @RequestMapping("/zta/scm/order/<模块>")`
+- 路径中 **`<模块>` 使用 kebab-case**（如 `return-order`），与 Feign `path` 一致；
+- Controller **实现**对应的 Feign 接口，保证路径与方法签名一致；**写与读可拆为两个 Controller**（如 `ReturnOrderController` + `ReturnOrderQueryController`），共用同一 `@RequestMapping` 前缀、方法路径不冲突即可
+- `@RequestMapping` 路径与 Feign `path` 相同
+
+## 方法实现
+
+- 方法体**仅做委派**，直接调用 AppService 并包装 `HttpResult` 返回
+- **禁止**在 Controller 中做 DTO 转换、Bean 拷贝、业务逻辑
+
+```java
+// 写：ReturnOrderController implements ReturnOrderApi → ReturnOrderAppService
+// 查：ReturnOrderQueryController implements ReturnOrderQueryApi → ReturnOrderQueryAppService
+// 两者 @RequestMapping("/zta/scm/order/return-order") 相同，仅方法映射不同
+```
+
+## 关联规则
+
+HTTP 方法、返回值、Bean Validation 等契约约束见 `java-api-contract.mdc`；AppService 见 `java-application-layer.mdc`。

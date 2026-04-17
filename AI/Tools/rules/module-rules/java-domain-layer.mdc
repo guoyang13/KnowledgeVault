@@ -1,0 +1,66 @@
+---
+description: Domain 层：领域实体、仓储接口命名、领域服务、枚举规范
+globs: **/domain/**/*.java,**/common/enums/**/*.java
+alwaysApply: false
+---
+
+# Domain 层规范
+
+## 领域实体（`domain.<聚合>.model`）
+
+- 继承 `com.blueorigin.framework.support.domain.BaseDomain`，不重复基类字段（id, createTime, updateTime 等）
+- `@Data @Builder @NoArgsConstructor @AllArgsConstructor @EqualsAndHashCode(callSuper = true)`
+- 枚举字段加 `@see 枚举全限定名`
+
+## 领域分页查询
+
+- `*DomainPageQuery` 继承 `PageRequest`，字段镜像查询条件
+
+## 仓储接口（`domain.<聚合>.repository`）
+
+- 纯接口，不继承框架 Repository
+- 方法命名：
+
+| 操作 | 命名 | 返回值 |
+|------|------|--------|
+| 保存 | `save(Entity)` | `Entity` |
+| 批量保存 | `saveBatch(List<Entity>)` | `boolean` |
+| 按 ID 查 | `findById(Long)` | `Optional<Entity>` |
+| 按业务键查 | `findByXxx(...)` | `Optional<Entity>` / `List<Entity>` |
+| 按 ID 删 | `deleteById(Long)` | `boolean` |
+| 按业务键删 | `deleteByXxx(...)` | `boolean` |
+| 分页查询 | `pageQuery(DomainPageQuery)` | `PageResult<Entity>` |
+
+## 领域服务
+
+- 接口在 `domain.<聚合>.service`，实现在 `.../service/impl`
+- 实现类 `@Service @RequiredArgsConstructor`
+
+## 校验规则
+
+- 实现 `com.blueorigin.framework.validation.rule.ValidationRule`（`extends AbstractValidationRule<T>`）
+- 避免校验逻辑散落在 AppService 中
+
+## 枚举规范（`common.enums`）
+
+- 实现 `BaseEnum` 体系：`IntegerBaseEnum`（整型）/ `StringBaseEnum`（字符串）/ `ByteBaseEnum`（byte）
+- `code` 类型与 DB 列存储类型一致：`tinyint`/`int` → 整型，`varchar` → 字符串
+- `@Getter` 注解；构造器含 `code` + `desc`
+- 提供 `fromCode` / `fromDesc` 静态方法，内部用 `BaseEnum.buildCodeMap` / `buildDescMap`
+- DDL → DO/实体生成时，枚举列须**同步**生成 `*Enum` 类；禁止仅写 `@see` 占位不生成
+
+```java
+@Getter
+public enum XxxStatusEnum implements IntegerBaseEnum {
+    ACTIVE(1, "有效"), INACTIVE(0, "无效");
+    private static final Map<Integer, XxxStatusEnum> CODE_MAP = BaseEnum.buildCodeMap(values());
+    private final Integer code;
+    private final String desc;
+    XxxStatusEnum(Integer code, String desc) { this.code = code; this.desc = desc; }
+    public static XxxStatusEnum fromCode(Integer code) { return CODE_MAP.get(code); }
+}
+```
+
+## 关联规则
+
+仓储实现见 `java-infrastructure-layer.mdc`；Application 层消费领域模型见 `java-application-layer.mdc`。

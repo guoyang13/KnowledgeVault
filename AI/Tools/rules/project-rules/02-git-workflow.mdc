@@ -1,0 +1,103 @@
+---
+description: Git 使用约定：分支与架构规则对齐、提交信息、PR/MR、合并与禁止项（zta-scm-order-service）
+globs:
+alwaysApply: true
+---
+
+# Git 工作流与协作约定
+
+## 分支类型、环境、版本策略
+
+| 分支 | 环境 | 版本策略 |
+|------|------|----------|
+| `release/release` | 生产 | RELEASE，禁止 SNAPSHOT |
+| `release/release-pre` | 预发 | RELEASE |
+| `release/release-qa` | 测试 | SNAPSHOT，禁止 RELEASE |
+| `release/release-dev` | 开发 | SNAPSHOT |
+| `feature/<名称>` / `bugfix/<编号>` | 功能/修复 | — |
+
+## 分支命名
+
+- **功能**：`feature/<名称>`，名称建议含日期或需求标识，如 `feature/20260402_order_export`（与团队现有习惯一致即可）。
+- **修复**：`bugfix/<编号或简述>`。
+- **发布线**：仅使用架构规则中定义的 `release/*`，勿自造与发布环境不一致的分支名。
+
+## 提交信息（commit message）
+
+### 推荐格式
+
+- 统一使用：`<type>(<scope>): <中文简短说明>`
+- 示例：
+  - `feat(return-order): 新增退货单开放平台推送接口`
+  - `fix(sales-order): 修复销售单取消时目的地校验错误`
+  - `refactor(rules): 重构 Cursor 规则目录结构`
+  - `test(erp-api): 新增 RO 退货单本地集成测试`
+  - `docs(skill): 补充新表全链路 CRUD skill 说明`
+
+### type 取值
+
+- `feat`：新功能、新接口、新能力
+- `fix`：缺陷修复、兼容性修正、线上问题处理
+- `refactor`：不改变外部行为的重构
+- `docs`：文档、规则、Skill、注释说明
+- `test`：新增或调整测试用例
+- `chore`：依赖、构建、配置、脚本等杂项变更
+- `style`：纯格式调整（不改逻辑）
+
+### scope 约定
+
+- **建议必填**，使用聚合名、模块名或主题名，统一 **kebab-case**
+- 常见取值：`return-order`、`purchase-order`、`sales-order`、`erp-api`、`rules`、`skill`、`sql`
+- 一次提交跨多个模块且无法归类时，可使用 `order`、`open-platform`、`project` 等较高层级 scope
+
+### 主题行要求
+
+- 使用**中文**描述改动目的，避免中英混杂
+- 聚焦“做了什么”，不要写成流水账
+- 长度尽量控制在 **72 个字符以内**
+- 禁止使用无意义主题：`update`、`fix bug`、`test`、`修改`
+- 禁止使用纯大写、句末标点或情绪化表达
+- 若使用工单号，可在主题行前缀 `PROJ-123` 等形式（按你们 Jira/禅道 习惯二选一写死）
+
+### 正文何时建议补充
+
+- 修改了 **`sql/init.sql`**
+- 修改了 `api` 模块对外契约
+- 一次提交涉及 **3 个及以上模块**
+- 含破坏性变更、兼容性影响、联调注意事项
+
+正文建议说明：改动背景、影响范围、是否含 SQL / API 契约变更、是否需要联调或配置调整。
+
+### 禁止事项
+
+- 禁止无意义占位（如 `update`、`fix bug` 无上下文）
+- 禁止一次提交混杂无关改动；大改动可拆多次提交
+- 禁止 message 与实际提交内容不符
+- 禁止自动生成冗长 AI 风格描述，保持简洁可读
+
+## Pull Request / Merge Request
+
+- **标题**：与核心改动一致，可读性优先。
+- **描述建议包含**：目的、主要改动点、是否 **改表/迁移**、是否 **破坏 Feign 契约**、是否需要**联调/配置变更**。
+- **评审**：关注 `api` 模块对外契约、`sql/init.sql` 与领域模型是否同步。
+
+## 合并与历史
+
+- **默认**：以团队选定的策略为准（如 `merge` / `squash`）；若使用 **squash**，确保 squash 后的说明仍清晰。
+- **发布分支**：向 `release/*` 合入时，核对 **`${revision}` / 版本号** 与架构规则中的 RELEASE/SNAPSHOT 约束。
+
+## 禁止提交内容
+
+- 密钥、令牌、本机绝对路径、个人 IDE 专属配置（除非仓库约定共享）。
+- 大块生成物、无意义的二进制（除非项目需要）。
+
+## Git 操作禁令
+
+- 禁止 master 分支变更，编码前检查当前分支，master 上立即停止。
+- 禁止在未确认影响范围前直接向 release/* 分支提交
+- 禁止自动 Push。
+- 禁止使用破坏历史的高风险命令（如强制 push、reset --hard），除非明确批准
+
+## 关联规则
+
+模块与 Maven 发布范围见 **`00-project-architecture.mdc`**；各层编码约定见 `module-rules/` 下分层规则。

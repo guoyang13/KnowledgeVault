@@ -1,0 +1,69 @@
+---
+description: Infrastructure 层：DO、Mapper、仓储实现、SnowFlake 注册、分页查询、配置类、MQ 消费者
+globs: **/infrastructure/**/*.java
+alwaysApply: false
+---
+
+# Infrastructure 层规范
+
+## DO（`infrastructure.persistence.entity`）
+
+- 继承 `com.blueorigin.framework.support.dal.BaseDO`，不重复基类字段
+- `@Data @EqualsAndHashCode(callSuper = true) @TableName(value = "t_xxx", autoResultMap = true)`
+- 枚举字段加 `@see 枚举全限定名`
+- Java 类型按列 SQL 类型映射（`varchar`→`String`、`tinyint`→`Integer`）
+
+## SnowFlake 注册
+
+每新增一个 DO，须在 `SnowFlakeIdConfig` 的 `static` 块中追加：
+
+```java
+SnowFlakeIdUtil.takePosition(XxxDO.class.getName());
+```
+
+未注册会导致雪花 ID 段冲突。
+
+## Mapper（`infrastructure.persistence.mapper`）
+
+- `extends BaseMapper<DO>`，`@Mapper` 注解
+- 配套**空** `Mapper.xml`（不在 XML 里写业务 SQL）
+- 普通查询用 `LambdaQueryWrapper`
+
+## 仓储实现（`infrastructure.persistence.repository`）
+
+- `extends ServiceImpl<Mapper, DO> implements XxxRepository`，`@Repository`
+- 领域模型与 DO 互转：`convertToDomain(DO)` / `convertToDO(Entity)` 私有方法，使用 `BeanCopierUtil.copy`
+- **禁止**生成"仅列表、不分页"的对外查询方法，统一走分页
+
+### 分页实现模式
+
+```java
+public PageResult<Entity> pageQuery(DomainPageQuery query) {
+    LambdaQueryWrapper<DO> wrapper = new LambdaQueryWrapper<>();
+    wrapper.eq(StrUtil.isNotBlank(query.getXxx()), DO::getXxx, query.getXxx());
+    wrapper.orderByDesc(DO::getId);
+    PageResult<DO> pageResult = PageUtils.doSelectPage(query, () -> this.list(wrapper));
+    return PageResult.convert(pageResult, list -> list.stream().map(this::convertToDomain).toList());
+}
+```
+
+### 批量查询
+
+`findByIds` 用 `Lists.partition(ids, PageConstants.PAGE_SIZE)` 分批，防 IN 过大。
+
+## 配置类（`infrastructure.config`）
+
+| 类型 | 模式 |
+|------|------|
+| SnowFlake ID | `@Configuration` + `static {}` 注册 DO |
+| Cache | `@Configuration` + `@Bean` 返回 Caffeine `Cache<K, V>` |
+| 动态配置 | domain 定义接口，infrastructure `@Component @RefreshScope @ConfigurationProperties` 实现 |
+
+## MQ 消费者
+
+- 继承 `BaseRocketMqConsumer`（`infrastructure.messaging.consumer`）
+- **日志**：消费入口、路由分支、处理结束须打可关联单号的日志；`info`/`warn`/`debug` 选用与占位符规范见 **`project-rules/03-java-comments-and-javadoc.mdc`**「Java 日志」章节。
+
+## 关联规则
+
+DO 对应的领域模型见 `java-domain-layer.mdc`；枚举同步生成见 `java-domain-layer.mdc`。全仓注释与日志标准见 **`project-rules/03-java-comments-and-javadoc.mdc`**。

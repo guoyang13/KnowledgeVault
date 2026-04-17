@@ -1,0 +1,60 @@
+---
+description: API 模块：Feign 接口声明、HTTP 方法、Request 设计原则、Bean Validation、返回值规范
+globs: **/api/**/*.java
+alwaysApply: false
+---
+
+# API 模块契约规范
+
+## Feign 接口
+
+- `name` 固定 `"zta-scm-order-service"`
+- `contextId` 驼峰、唯一（如 `returnOrderApi`）
+- `path` 固定以 `/zta` 起头，形如 `/zta/scm/order/<模块>`；**`<模块>` 为 kebab-case**（如 `return-order`），不用 camelCase 作路径段；禁止沿用外部网关路径（如 `/api/erp`）
+
+```java
+package com.zta.scm.order.api.returnorder.client;
+
+@FeignClient(name = "zta-scm-order-service", contextId = "returnOrderApi",
+             path = "/zta/scm/order/return-order")
+public interface ReturnOrderApi { ... }
+```
+
+- **写与读拆分**：同一资源下可将「保存/删除」与「分页查询」拆成两个 Feign 接口（如 `ReturnOrderApi` + `ReturnOrderQueryApi`），`path` 相同、`contextId` 须不同；调用方按需注入其一或两个。
+
+## HTTP 方法
+
+- **所有对外接口统一 `@PostMapping`**，禁止 `@GetMapping`、`@PutMapping`、`@DeleteMapping`、`@PatchMapping`
+- 请求参数通过 `@RequestBody` 传递；需校验的加 `@Validated`
+
+## 返回值
+
+- 统一 `HttpResult<T>`；分页 `HttpResult<PageResult<T>>`；删除 `HttpResult<Boolean>`
+
+## Request 设计原则
+
+| 场景 | 命名 | 说明 |
+|------|------|------|
+| 创建/更新统一 | `*SaveRequest` | `id` 为空=创建，非空=更新 |
+| 删除 | `*DeleteRequest` | 含 `id` 字段 |
+| 查询单条 | `*GetRequest` | 含 `id` 或业务键 |
+| 分页查询 | `*PageQueryRequest` | 继承 `PageRequest` |
+| 子实体 | `*ItemRequest` | 创建/修改共用 |
+| 开放平台 | 放 `api.openplatform.request` 包 | — |
+
+## Bean Validation
+
+- **必须** `jakarta.validation.*`，**禁止** `javax.validation.*`
+- 常用：`@NotBlank`、`@NotNull`、`@NotEmpty`、`@Size`、`@Min`、`@Max`、`@Pattern`、`@Valid`
+- 入参集合（含分页/查询 Request 里用于 `IN` 过滤的 `List<String>` 等）应加 `@Size(max = ?)`：**未单独约定时默认 `max = 2000`**；若产品/性能/DB 有更严或更宽要求，在字段上显式写死并在需求或评审中说明
+- 嵌套对象用 `@Valid` 触发级联校验
+
+## DTO
+
+- 含审计字段的 DTO 继承 `BaseUserNameDTO`，`@Data @EqualsAndHashCode(callSuper = true)`
+- 分页请求类继承 `PageRequest`，`@Data @EqualsAndHashCode(callSuper = true)`
+- 普通请求 / 开放平台 Data 类仅 `@Data`，无继承
+
+## 关联规则
+
+Controller 实现见 `java-interfaces-layer.mdc`；Application 层消费 Request 见 `java-application-layer.mdc`。
