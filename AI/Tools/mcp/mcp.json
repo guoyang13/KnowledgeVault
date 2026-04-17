@@ -3,7 +3,7 @@
     "user-aliyun-dms-mcp-server": {
       "url": "https://dms-mcper-bljdy-jdtgjavrtf.cn-hangzhou.fcapp.run/sse",
       "headers": {
-        "Authorization": "Bearer DMS-97f4dba3-d388-438c-8f68-65fe9e49db7c-1776394935"
+        "Authorization": ""
       }
     }
   }
