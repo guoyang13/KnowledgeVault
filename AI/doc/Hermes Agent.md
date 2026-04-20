@@ -54,7 +54,90 @@ Hermes 会构建持久的**用户画像**——包括决策历史、任务模式
 
 ---
 
-## 二、与其他 Agent 框架对比
+## 二、安装
+
+### 前提条件
+
+| 项目 | 要求 |
+|:---|:---|
+| **系统** | Linux / macOS / Windows (WSL2) / Android (Termux) |
+| **软件** | Git（安装脚本会自动处理 Python、Node.js 等） |
+| **内存** | 最低 4 GB，推荐 8 GB+ |
+| **模型** | 需要 API Key（OpenRouter / OpenAI / Anthropic 等）或本地 Ollama，且模型需支持 ≥64K tokens 上下文 |
+
+### 一键安装
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+```
+
+安装完成后重载 shell：
+
+```bash
+source ~/.zshrc   # macOS zsh
+# 或
+source ~/.bashrc  # Linux bash
+```
+
+### 初始配置
+
+```bash
+hermes setup    # 交互式配置向导（LLM 提供商 + 消息网关，一次搞定）
+hermes model    # 单独切换模型提供商/模型
+hermes doctor   # 环境诊断，排查问题
+```
+
+**本地模型示例（Ollama）**：选择 "Custom endpoint"，填入 `http://localhost:11434/v1`
+
+---
+
+## 三、使用
+
+### CLI 常用命令
+
+| 命令 | 说明 |
+|:---|:---|
+| `hermes` | 启动终端交互界面，开始对话 |
+| `hermes model` | 切换 LLM 模型 |
+| `hermes tools` | 配置启用的工具 |
+| `hermes config set` | 设置单个配置项 |
+| `hermes update` | 更新到最新版 |
+| `hermes doctor` | 诊断问题 |
+
+### 消息网关（Telegram / Discord / Slack / WhatsApp / Signal / Email）
+
+```bash
+hermes gateway setup   # 配置消息平台
+hermes gateway start   # 启动网关
+```
+
+配置后就可以通过 Telegram 等平台远程和 Agent 对话，而 Agent 在云端工作。
+
+### 会话中斜杠命令
+
+| 命令 | 功能 |
+|:---|:---|
+| `/new` / `/reset` | 新建 / 重置对话 |
+| `/model [provider:model]` | 会话中切换模型 |
+| `/personality [name]` | 切换人设 |
+| `/retry` / `/undo` | 重试 / 撤销上条回复 |
+| `/skills` | 查看已学会的技能 |
+| `/compress` | 压缩上下文以节省 token |
+| `/usage` | 查看 token 用量 |
+| `/insights [--days N]` | 查看使用洞察 |
+| `Ctrl+C` (CLI) / `/stop` (消息) | 停止当前任务 |
+
+### 技能系统
+
+Agent 成功完成复杂任务后，会自动生成 **Skill Document**，之后可以用 `/技能名` 直接调用。查看所有技能：
+
+```bash
+/skills
+```
+
+---
+
+## 四、与其他 Agent 框架对比
 
 | 特性 | Hermes Agent | AutoGPT | LangChain |
 |:---|:---|:---|:---|
@@ -67,7 +150,7 @@ Hermes 会构建持久的**用户画像**——包括决策历史、任务模式
 
 ---
 
-## 三、总结
+## 五、总结
 
 Hermes Agent 的核心卖点是**学习循环**——别的 Agent 每次都从零开始解决问题，Hermes 会把经验积累下来，越用越聪明。
 
