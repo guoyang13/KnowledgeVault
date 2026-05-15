@@ -11,14 +11,10 @@
             "id": "4e6237bb1057afb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Tools/git/git提交变更.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "git提交变更"
+              "title": "新标签页"
             }
           }
         ]
@@ -182,27 +178,43 @@
   },
   "active": "4e6237bb1057afb2",
   "lastOpenFiles": [
-    "Tools/git/多仓库处理.md",
+    "架构设计师/课堂资料/课堂pdf/2026年4月8日（架构案例特训3）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年4月3日（架构案例特训2）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年4月1日（软件架构设计4及架构案例特训1）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年4月1日（软件架构设计4及架构案例特训1）架构师网络课堂备忘录 (1).pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年4月11日（架构案例特训4及人工智能）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年3月27日（软件架构设计3）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年3月25日（软件架构设计2）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年3月23日（软件架构设计1）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年3月20日（案例技巧及案例软件工程篇）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年3月18日（软件工程3）架构师网络课堂备忘录.pdf",
+    "架构设计师/课堂资料/课堂pdf/2026年3月16日（软件工程2）架构师网络课堂备忘录.pdf",
+    "AI/Miniconda/conda常见命令.md",
+    "AI/Tools/doc/skills/summarize-code-changes-to-rules/SKILL.md",
+    "AI/Tools/doc/skills/sql-schema-to-ddd-codegen/SKILL.md",
+    "AI/Tools/doc/skills/merge-feature-branch-to-qa/SKILL.md",
+    "AI/Tools/doc/skills/generate-rest-curl/SKILL.md",
+    "AI/Tools/doc/skills/data-dict-json/SKILL.md",
+    "AI/Tools/doc/skills/crud-new-table-full-stack/SKILL.md",
+    "AI/Tools/doc/Hermes Agent.md",
+    "AI/Tools/doc/AI Coding是银弹吗.md",
+    "AI/Tools/Miniconda/macOS命令行安装Miniconda.md",
+    "AI/Tools/Miniconda/conda常见命令.md",
+    "AI/Tools/MinerU/模型下载与配置.md",
+    "AI/Tools/MinerU/macOS安装MinerU.md",
+    "AI/Tools/MinerU/MinerU常见命令.md",
+    "AI/Miniconda/macOS命令行安装Miniconda.md",
+    "读书笔记/软件工程/实现领域驱动设计.md",
     "Tools/git/git提交变更.md",
+    "Tools/git/多仓库处理.md",
     "Tools/终端/iTerm2/修改主题.md",
     "Tools/终端/nano/nano.md",
     "Tools/终端/iTerm2/iTerm2插件.md",
-    "Tools/终端/nano",
     "Tools/终端/iTerm2/iTerm2.md",
     "Tools/git/清理历史重置仓库.md",
-    "Tools/终端/iTerm2",
-    "Tools/终端",
     "Tools/未命名.md",
     "Tools/git/tokens和ssh.md",
-    "book/未命名.md",
-    "Tools/git",
     "project-management-professional-pmp.png",
-    "book/computer/编译原理 原理、技术与工具 ( etc.) (Z-Library).pdf",
-    "book/project-management-professional-pmp.png",
-    "book/computer/深入理解计算机系统 (Randal E. Bryant, David R. O’Hallaron) (Z-Library).pdf",
-    "book/computer/计算机组成原理 (艾伦·克莱门茨 (Alan Clements)) (Z-Library).pdf",
-    "book/computer/计算机科学导论 - 原书第3版 (贝赫鲁兹·佛罗赞) (Z-Library).pdf",
-    "book/computer/算法导论 第三版 可复制 有目录 (Thmos.H.Cormen ,Charles E. Leiserson etc.) (Z-Library).pdf",
-    "book/computer/现代操作系统 (Andrew S. Tanenbaum, Herbert Bos) (Z-Library).pdf"
+    "book/project-management-professional-pmp.png"
   ]
 }

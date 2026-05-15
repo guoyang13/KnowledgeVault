@@ -6,8 +6,9 @@
 
 ```json
 {
-    "java.home": "/Users/guoyang/Library/Java/JavaVirtualMachines/openjdk-23.0.1/Contents/Home",
-    "java.configuration.maven.userSettings": "/Users/guoyang/DeveloperTools/apache-maven-3.9.9/conf/settings-BO.xml",
+    "java.home": "/Users/guoyang/Library/Java/JavaVirtualMachines/graalvm-jdk-17.0.12/Contents/Home",
+    "java.jdt.ls.java.home": "/Users/guoyang/Library/Java/JavaVirtualMachines/graalvm-jdk-17.0.12/Contents/Home",
+    "java.configuration.maven.userSettings": "/Users/guoyang/DevelopmentTools/maven/settings-BO.xml",
 }
 ```
 
