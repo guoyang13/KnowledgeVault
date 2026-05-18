@@ -28,17 +28,17 @@ aliases:
 ## CodeAct（Code as Action）
 - 用"写一段代码并执行"作为通用动作，比离散 function calling 表达力强得多。
 - 适合数据处理、复合任务。
-- 见 [[Tool Use与Function Calling]]。
+- 见 [[AI/00-AI知识体系/概念/03-Agent系统/03-Tool Use与Function Calling|Tool Use与Function Calling]]。
 
 ## 现代实现注意
-- 真实工业 Agent 很少纯 ReAct——往往是 **ReAct + Plan + Reflection + 权限控制 + Context 管理** 的混合体，这就是 [[Agent Harness]] 的工作。
-- 推理模型（[[推理模型]]）内置 thinking，Action 步骤更稳，但 harness 设计依然关键。
+- 真实工业 Agent 很少纯 ReAct——往往是 **ReAct + Plan + Reflection + 权限控制 + Context 管理** 的混合体，这就是 [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]] 的工作。
+- 推理模型（[[AI/00-AI知识体系/概念/01-模型层/03-推理模型|推理模型]]）内置 thinking，Action 步骤更稳，但 harness 设计依然关键。
 
 ## 与之相关
-- [[Workflow vs Agent]]
-- [[Tool Use与Function Calling]]
-- [[Agent Harness]]
-- [[推理时增强-CoT]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/03-Tool Use与Function Calling|Tool Use与Function Calling]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/07-推理时增强-CoT|推理时增强-CoT]]
 
 ## 延伸阅读
 - *ReAct* (Yao et al., 2022)

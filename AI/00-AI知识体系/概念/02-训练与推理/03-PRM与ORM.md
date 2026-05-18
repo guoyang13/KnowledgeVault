@@ -21,17 +21,17 @@ aliases:
 ## 用法
 1. **Best-of-N / 重排**：生成 N 条解，PRM 选最好的。
 2. **Beam Search / MCTS**：把 PRM 当价值函数做搜索。
-3. **RL 训练**：作为 [[RLVR]] 的稠密信号补充。
+3. **RL 训练**：作为 [[AI/00-AI知识体系/概念/02-训练与推理/02-RLVR|RLVR]] 的稠密信号补充。
 
 ## Verifier 的角色
 - **天然 verifier**：代码可运行、数学有答案、Lean 可证。
 - **学习型 verifier**：训练一个小判别模型，泛化到无法直接验证的任务。
 
 ## 与之相关
-- [[RLVR]]
-- [[推理模型]]
-- [[推理时增强-CoT]]
-- [[Test-time Compute Scaling]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/02-RLVR|RLVR]]
+- [[AI/00-AI知识体系/概念/01-模型层/03-推理模型|推理模型]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/07-推理时增强-CoT|推理时增强-CoT]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/08-Test-time Compute Scaling|Test-time Compute Scaling]]
 
 ## 延伸阅读
 - *Let's Verify Step by Step*（OpenAI, 2023）

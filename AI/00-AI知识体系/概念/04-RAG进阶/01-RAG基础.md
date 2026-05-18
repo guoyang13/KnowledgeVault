@@ -20,7 +20,7 @@ aliases:
 ## Advanced RAG 常用技巧
 - **Query 优化**：Query Rewriting、HyDE（用 LLM 先伪造答案再检索）、Multi-Query。
 - **Chunking 策略**：按语义切、滑窗、父子块（small-to-big）。
-- **Hybrid Search**：稠密向量 + BM25 / SPLADE 关键词混合（见 [[GraphRAG与Agentic RAG]]）。
+- **Hybrid Search**：稠密向量 + BM25 / SPLADE 关键词混合（见 [[AI/00-AI知识体系/概念/04-RAG进阶/02-GraphRAG与Agentic RAG|GraphRAG与Agentic RAG]]）。
 - **Reranker**：Cohere Rerank、BGE Reranker、Voyage Rerank 等 cross-encoder。
 - **Citation / Grounding**：强制带引用并验证。
 - **Self-RAG / Corrective RAG**：模型自评检索质量，必要时再搜或重写。
@@ -34,10 +34,10 @@ aliases:
 - 商业：Pinecone、Vespa、Vald。
 
 ## 与之相关
-- [[GraphRAG与Agentic RAG]]
-- [[Agent Memory]]
-- [[Context Engineering]]
-- [[上下文与KV Cache]]
+- [[AI/00-AI知识体系/概念/04-RAG进阶/02-GraphRAG与Agentic RAG|GraphRAG与Agentic RAG]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/08-Agent Memory|Agent Memory]]
+- [[AI/00-AI知识体系/概念/06-工程生态/02-Context Engineering|Context Engineering]]
+- [[AI/00-AI知识体系/概念/01-模型层/07-上下文与KV Cache|上下文与KV Cache]]
 
 ## 延伸阅读
 - *Retrieval-Augmented Generation*（Lewis et al., 2020）

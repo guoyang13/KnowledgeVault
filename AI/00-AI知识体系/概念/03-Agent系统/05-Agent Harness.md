@@ -36,16 +36,16 @@ aliases:
 
 ## 趋势
 - **更长 horizon**：从分钟级到多小时甚至多日级任务。
-- **更少 prompt，更多结构**：从堆 prompt 转向结构化状态机 + 工具协议（[[MCP协议]]）。
+- **更少 prompt，更多结构**：从堆 prompt 转向结构化状态机 + 工具协议（[[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]）。
 - **统一权限模型**：Antigravity / Cursor 等开始把 harness 的"许可层"标准化。
 
 ## 与之相关
-- [[ReAct与Agent范式]]
-- [[Workflow vs Agent]]
-- [[Multi-Agent编排]]
-- [[MCP协议]]
-- [[Coding Agent]]
-- [[Eval Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/04-Multi-Agent编排|Multi-Agent编排]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]
+- [[AI/00-AI知识体系/概念/05-评测/01-Eval Harness|Eval Harness]]
 
 ## 延伸阅读
 - SWE-Agent 论文 (Princeton, 2024)

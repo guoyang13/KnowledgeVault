@@ -24,9 +24,9 @@ aliases:
 - **GPT-4 / GPT-5 / Gemini 1.5+** 普遍被认为是 MoE（未公开细节）。
 
 ## 与之相关
-- [[Transformer架构]]
-- [[推理模型]]
-- [[高效微调]]
+- [[AI/00-AI知识体系/概念/01-模型层/01-Transformer架构|Transformer架构]]
+- [[AI/00-AI知识体系/概念/01-模型层/03-推理模型|推理模型]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/05-高效微调|高效微调]]
 
 ## 延伸阅读
 - Switch Transformer (Google, 2021)

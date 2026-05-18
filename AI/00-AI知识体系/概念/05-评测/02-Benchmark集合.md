@@ -5,7 +5,7 @@ aliases:
 
 # Benchmark 集合（2025–2026 重点）
 
-> 按"能力维度"分类的主流评测集。配合 [[Eval Harness]] 使用。
+> 按"能力维度"分类的主流评测集。配合 [[AI/00-AI知识体系/概念/05-评测/01-Eval Harness|Eval Harness]] 使用。
 
 ## 通用知识与推理
 - **MMLU / MMLU-Pro**：57 学科多选题，老牌通用基准（已接近饱和）。
@@ -57,9 +57,9 @@ aliases:
 - 永远关注**发布时间 vs 模型训练时间**，警惕数据污染。
 
 ## 与之相关
-- [[Eval Harness]]
-- [[Agent Harness]]
-- [[Coding Agent]]
+- [[AI/00-AI知识体系/概念/05-评测/01-Eval Harness|Eval Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]
 
 ## 延伸阅读
 - Papers With Code Leaderboards

@@ -21,9 +21,9 @@ aliases:
 - **Diffusion LM**：用扩散思路生成文本，也是非主流但值得关注的探索方向。
 
 ## 与之相关
-- [[Transformer架构]]
-- [[上下文与KV Cache]]
-- [[推理加速三件套]]
+- [[AI/00-AI知识体系/概念/01-模型层/01-Transformer架构|Transformer架构]]
+- [[AI/00-AI知识体系/概念/01-模型层/07-上下文与KV Cache|上下文与KV Cache]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/06-推理加速三件套|推理加速三件套]]
 
 ## 延伸阅读
 - Mamba: Linear-Time Sequence Modeling (Gu & Dao, 2023)

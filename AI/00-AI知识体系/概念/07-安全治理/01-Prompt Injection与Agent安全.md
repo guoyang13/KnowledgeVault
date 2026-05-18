@@ -44,10 +44,10 @@ aliases:
 - **Model Spec**（OpenAI / Anthropic 公开了各自的"行为宪法"）。
 
 ## 与之相关
-- [[MCP协议]]
-- [[Computer Use与Browser Agent]]
-- [[Agent Harness]]
-- [[Agent Memory]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/07-Computer Use与Browser Agent|Computer Use与Browser Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/08-Agent Memory|Agent Memory]]
 
 ## 延伸阅读
 - Simon Willison 关于 Prompt Injection 的系列博客（最权威的中文/英文科普源之一）

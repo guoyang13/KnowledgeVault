@@ -38,10 +38,10 @@ aliases:
 - 注意：复杂度和成本都会显著上升，先确认朴素 RAG 真的不够。
 
 ## 与之相关
-- [[RAG基础]]
-- [[Agent Memory]]
-- [[ReAct与Agent范式]]
-- [[Multi-Agent编排]]
+- [[AI/00-AI知识体系/概念/04-RAG进阶/01-RAG基础|RAG基础]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/08-Agent Memory|Agent Memory]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/04-Multi-Agent编排|Multi-Agent编排]]
 
 ## 延伸阅读
 - Microsoft *GraphRAG* 论文与开源实现

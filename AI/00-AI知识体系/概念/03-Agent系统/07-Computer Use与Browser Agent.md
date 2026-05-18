@@ -33,10 +33,10 @@ aliases:
 - **τ-Bench**：偏工具调用 + 客服流程。
 
 ## 与之相关
-- [[多模态模型]]
-- [[Agent Harness]]
-- [[Prompt Injection与Agent安全]]
-- [[MCP协议]]
+- [[AI/00-AI知识体系/概念/01-模型层/04-多模态模型|多模态模型]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/07-安全治理/01-Prompt Injection与Agent安全|Prompt Injection与Agent安全]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
 
 ## 延伸阅读
 - Anthropic Computer Use 博客与 reference 实现

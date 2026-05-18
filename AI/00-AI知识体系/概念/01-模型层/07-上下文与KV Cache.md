@@ -22,10 +22,10 @@ aliases:
 - 关键信息放在头尾，不要埋在中间。
 
 ## 与之相关
-- [[Transformer架构]]
-- [[推理加速三件套]]
-- [[RAG基础]]
-- [[Context Engineering]]
+- [[AI/00-AI知识体系/概念/01-模型层/01-Transformer架构|Transformer架构]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/06-推理加速三件套|推理加速三件套]]
+- [[AI/00-AI知识体系/概念/04-RAG进阶/01-RAG基础|RAG基础]]
+- [[AI/00-AI知识体系/概念/06-工程生态/02-Context Engineering|Context Engineering]]
 
 ## 延伸阅读
 - *Lost in the Middle*（Liu et al., 2023）

@@ -22,7 +22,7 @@ aliases:
 
 ## 决定能力的两件事
 - **底层模型**：Claude Sonnet 4+、GPT-5、Gemini 3 是当前第一梯队。
-- **[[Agent Harness]] 质量**：同模型 + 不同 harness，SWE-bench 能差 10–30 个点。
+- **[[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]] 质量**：同模型 + 不同 harness，SWE-bench 能差 10–30 个点。
 
 ## 工程关键
 - **Context 管理**：仓库太大塞不下 → repo map、grep / glob、按需读文件。
@@ -30,19 +30,19 @@ aliases:
 - **多步循环**：编辑 → 编译/测试 → 看错误 → 修。
 - **子 Agent / 并行任务**：例如同时改前后端。
 - **审批模型**：写文件 / 跑命令 / 删除 / 推远端 → 分级权限。
-- **[[MCP协议]]**：标准化外部工具接入。
+- **[[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]**：标准化外部工具接入。
 
 ## 评测
 - **SWE-bench Verified**：真实 GitHub issue。
 - **Terminal-Bench**、**LiveCodeBench**、**HumanEval+**。
-- 见 [[Benchmark集合]]。
+- 见 [[AI/00-AI知识体系/概念/05-评测/02-Benchmark集合|Benchmark集合]]。
 
 ## 与之相关
-- [[Agent Harness]]
-- [[MCP协议]]
-- [[Context Engineering]]
-- [[Multi-Agent编排]]
-- [[Benchmark集合]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/06-工程生态/02-Context Engineering|Context Engineering]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/04-Multi-Agent编排|Multi-Agent编排]]
+- [[AI/00-AI知识体系/概念/05-评测/02-Benchmark集合|Benchmark集合]]
 
 ## 延伸阅读
 - SWE-bench 论文与官方排行榜

@@ -23,7 +23,7 @@ aliases:
 
 ## 与训练的关系
 - **Pretraining Scaling**：参数 + 数据 + FLOPs（已逐渐放缓）。
-- **Post-training Scaling**：[[RLVR]] / 偏好数据规模。
+- **Post-training Scaling**：[[AI/00-AI知识体系/概念/02-训练与推理/02-RLVR|RLVR]] / 偏好数据规模。
 - **Test-time Scaling**：推理花钱。
 - 三者**乘性叠加**，是当前前沿模型提升的主要驱动力。
 
@@ -33,10 +33,10 @@ aliases:
 - API 普遍提供 `low / medium / high` 三档 reasoning effort，按需选用。
 
 ## 与之相关
-- [[推理模型]]
-- [[RLVR]]
-- [[PRM与ORM]]
-- [[推理时增强-CoT]]
+- [[AI/00-AI知识体系/概念/01-模型层/03-推理模型|推理模型]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/02-RLVR|RLVR]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/03-PRM与ORM|PRM与ORM]]
+- [[AI/00-AI知识体系/概念/02-训练与推理/07-推理时增强-CoT|推理时增强-CoT]]
 
 ## 延伸阅读
 - OpenAI o1 system card / 博客

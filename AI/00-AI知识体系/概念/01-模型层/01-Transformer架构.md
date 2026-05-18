@@ -18,11 +18,11 @@ aliases:
 ## 代表模型
 - GPT 系、Claude、Gemini、Llama、Qwen、DeepSeek、Mistral 等几乎全部。
 
-## 与之相关
-- [[MoE]]
-- [[新架构-SSM与Mamba]]
-- [[上下文与KV Cache]]
-- [[推理加速三件套]]
+
+
+## 前置阅读
+- [[AI/00-AI知识体系/概念/00-基础与LLM概论/07-注意力机制直觉-QKV|注意力机制直觉-QKV]]
+- [[AI/00-AI知识体系/概念/00-基础与LLM概论/04-语言模型与Next-Token-Prediction|语言模型与 Next-Token Prediction]]
 
 ## 延伸阅读
 - Vaswani et al., *Attention is All You Need* (2017)

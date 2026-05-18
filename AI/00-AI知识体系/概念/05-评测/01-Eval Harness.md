@@ -10,7 +10,7 @@ aliases:
 ## 为什么需要 harness
 - 不同论文/排行榜实现细节差异 → 同一模型分数可差好几个点。
 - Harness 提供"标准化跑法"，让结果可比、可复现。
-- 区别于 [[Agent Harness]]（那个是包装 LLM 做 Agent；这个是包装跑评测）。
+- 区别于 [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]（那个是包装 LLM 做 Agent；这个是包装跑评测）。
 
 ## 主流 Eval Harness
 | 工具 | 出品 | 偏向 |
@@ -35,9 +35,9 @@ aliases:
 - **Cherry-picking 排行榜**：选对自己有利的子集汇报。
 
 ## 与之相关
-- [[Benchmark集合]]
-- [[Agent Harness]]
-- [[LLM-as-a-Judge]]（→ 在 [[Benchmark集合]] 内）
+- [[AI/00-AI知识体系/概念/05-评测/02-Benchmark集合|Benchmark集合]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/05-评测/03-LLM-as-a-Judge|LLM-as-a-Judge]]（→ 在 [[AI/00-AI知识体系/概念/05-评测/02-Benchmark集合|Benchmark集合]] 内）
 
 ## 延伸阅读
 - lm-evaluation-harness GitHub 文档

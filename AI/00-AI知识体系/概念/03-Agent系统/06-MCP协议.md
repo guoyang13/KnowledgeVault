@@ -33,14 +33,14 @@ aliases:
 - 二者互补，不竞争。
 
 ## 安全注意
-- MCP 工具描述本身可能携带 [[Prompt Injection与Agent安全|prompt injection]]。
+- MCP 工具描述本身可能携带 [[AI/00-AI知识体系/概念/07-安全治理/01-Prompt Injection与Agent安全|prompt injection]]。
 - 远程 server 要校验来源、做 sandbox / 审批。
 
 ## 与之相关
-- [[Tool Use与Function Calling]]
-- [[Agent Harness]]
-- [[Prompt Injection与Agent安全]]
-- [[Computer Use与Browser Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/03-Tool Use与Function Calling|Tool Use与Function Calling]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/07-安全治理/01-Prompt Injection与Agent安全|Prompt Injection与Agent安全]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/07-Computer Use与Browser Agent|Computer Use与Browser Agent]]
 
 ## 延伸阅读
 - modelcontextprotocol.io 官方文档

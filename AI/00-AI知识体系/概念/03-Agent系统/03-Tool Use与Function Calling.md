@@ -27,14 +27,14 @@ aliases:
 - **错误信息可读**：让模型能从错误里恢复。
 
 ## 协议化趋势
-- **[[MCP协议]]**：把"工具/资源/Prompt"标准化，跨厂商复用。
+- **[[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]**：把"工具/资源/Prompt"标准化，跨厂商复用。
 - **A2A**：Agent 之间互相调用。
 
 ## 与之相关
-- [[ReAct与Agent范式]]
-- [[MCP协议]]
-- [[Agent Harness]]
-- [[Workflow vs Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
 
 ## 延伸阅读
 - OpenAI / Anthropic / Gemini 的 Tool Use 文档

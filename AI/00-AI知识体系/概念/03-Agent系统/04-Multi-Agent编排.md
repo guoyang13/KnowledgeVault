@@ -12,7 +12,7 @@ aliases:
 - **Handoff / Swarm**：Agent 之间像团队成员一样"转交"任务（OpenAI Swarm 风格）。
 - **Agent Graph**：用有状态图建模（LangGraph 风格），节点 = Agent / 工具，边 = 状态转移。
 - **Debate / Society**：多个角色辩论或互评，得出更稳健答案。
-- **Pipeline**：固定串行（更偏 [[Workflow vs Agent|Workflow]]）。
+- **Pipeline**：固定串行（更偏 [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow]]）。
 
 ## 关键设计点
 - **角色定义**：System prompt 描述"你是谁、能用什么工具、什么时候交给谁"。
@@ -32,10 +32,10 @@ aliases:
 - **Cursor / Codex / Claude Code 内部** 都有 orchestrator + subagent 概念
 
 ## 与之相关
-- [[Workflow vs Agent]]
-- [[Agent Harness]]
-- [[MCP协议]]
-- [[Coding Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]
 
 ## 延伸阅读
 - AutoGen / CrewAI / LangGraph 官方文档

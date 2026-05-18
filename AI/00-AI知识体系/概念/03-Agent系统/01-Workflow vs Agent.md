@@ -21,7 +21,7 @@ aliases:
 - 任务路径不确定，需要根据中间结果分支。
 - 工具空间大、组合方式多（编程、研究、运维）。
 - 模型能力足够强（差模型上的 Agent 很容易翻车）。
-- 例：[[Coding Agent]]、深度研究、Computer Use。
+- 例：[[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]、深度研究、Computer Use。
 
 ## 常见 Workflow 模式（Anthropic）
 1. **Prompt Chaining**：串行多步。
@@ -35,10 +35,10 @@ aliases:
 - 一旦上 Agent，**可观测性、权限模型、错误恢复**就成为头号工程问题。
 
 ## 与之相关
-- [[ReAct与Agent范式]]
-- [[Multi-Agent编排]]
-- [[Agent Harness]]
-- [[Coding Agent]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/04-Multi-Agent编排|Multi-Agent编排]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]
 
 ## 延伸阅读
 - Anthropic, *Building Effective Agents* (2024)
