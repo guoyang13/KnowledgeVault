@@ -1,3 +1,8 @@
+---
+aliases:
+  - RAG基础
+---
+
 # RAG 基础（Retrieval-Augmented Generation）
 
 > 用"检索 + 拼到 prompt"的方式给 LLM 注入外部知识。对抗幻觉、降低成本、让答案可引用。

@@ -1,3 +1,8 @@
+---
+aliases:
+  - Test-time Compute Scaling
+---
+
 # Test-time Compute Scaling（推理时算力扩展）
 
 > "多花算力换准确率"——和 Pretraining Scaling、Post-training Scaling 并列的第三条 Scaling Law。

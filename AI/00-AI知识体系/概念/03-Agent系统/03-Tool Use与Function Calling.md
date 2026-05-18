@@ -1,3 +1,8 @@
+---
+aliases:
+  - Tool Use与Function Calling
+---
+
 # Tool Use 与 Function Calling
 
 > 让 LLM 按 schema 调用外部工具，是 Agent 系统的最小公共底座，现已是所有主流 LLM 的标配。

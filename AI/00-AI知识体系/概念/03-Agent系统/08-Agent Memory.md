@@ -1,3 +1,8 @@
+---
+aliases:
+  - Agent Memory
+---
+
 # Agent Memory（Agent 记忆系统）
 
 > 让 Agent 跨会话 / 跨任务保持上下文：用户偏好、过往结论、长期目标、错误教训。

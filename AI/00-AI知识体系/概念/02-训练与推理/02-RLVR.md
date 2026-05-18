@@ -1,3 +1,8 @@
+---
+aliases:
+  - RLVR
+---
+
 # RLVR（Reinforcement Learning with Verifiable Rewards）
 
 > 用"可自动验证的奖励信号"做 RL 训练——是推理模型崛起的关键技术。

@@ -1,3 +1,8 @@
+---
+aliases:
+  - GraphRAG与Agentic RAG
+---
+
 # GraphRAG 与 Agentic RAG
 
 > 朴素 RAG 解决不了"跨文档综合""模糊全局问题"，进阶方向有两条：**用图组织知识** 和 **让 Agent 主动检索**。

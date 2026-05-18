@@ -1,3 +1,8 @@
+---
+aliases:
+  - Agent Harness
+---
+
 # Agent Harness（Agent 骨架 / Scaffold）
 
 > 包裹 LLM、把它变成 Agent 的那层代码：上下文管理、工具循环、记忆、文件视图、错误恢复、权限控制。

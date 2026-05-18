@@ -1,3 +1,8 @@
+---
+aliases:
+  - MoE
+---
+
 # MoE（Mixture of Experts）
 
 > 稀疏专家网络：模型有海量参数，但每个 token 只激活其中一小部分，做到"激活参数 ≪ 总参数"。

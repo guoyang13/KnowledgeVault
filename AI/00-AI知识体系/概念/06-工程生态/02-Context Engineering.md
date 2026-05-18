@@ -1,3 +1,8 @@
+---
+aliases:
+  - Context Engineering
+---
+
 # Context Engineering（上下文工程）
 
 > 2025 年开始替代/扩展 "Prompt Engineering" 的术语：重点不再是写一段聪明 prompt，而是**系统化管理**模型每次看到的全部上下文。

@@ -1,3 +1,8 @@
+---
+aliases:
+  - 上下文与KV Cache
+---
+
 # 上下文窗口与 KV Cache
 
 > Context Window 决定模型"看得多远"；KV Cache 决定它"看得多快、多便宜"。

@@ -1,3 +1,8 @@
+---
+aliases:
+  - Multi-Agent编排
+---
+
 # Multi-Agent 编排
 
 > 多个 LLM Agent 协作完成任务。各 Agent 可有不同角色 / 工具 / 模型。

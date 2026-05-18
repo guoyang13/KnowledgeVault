@@ -1,3 +1,8 @@
+---
+aliases:
+  - Workflow vs Agent
+---
+
 # Workflow vs Agent
 
 > Anthropic 在《Building Effective Agents》中提出的关键二分法：**先用 Workflow，必要时再上 Agent**。

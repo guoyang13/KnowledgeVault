@@ -1,3 +1,8 @@
+---
+aliases:
+  - Computer Use与Browser Agent
+---
+
 # Computer Use 与 Browser Agent
 
 > 让 AI 直接操作真实计算机界面（截屏 + 鼠标键盘）或浏览器，能干"任何人类能在屏幕前做的事"。

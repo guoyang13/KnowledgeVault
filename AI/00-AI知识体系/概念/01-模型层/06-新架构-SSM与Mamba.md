@@ -1,3 +1,8 @@
+---
+aliases:
+  - 新架构-SSM与Mamba
+---
+
 # 新架构：SSM 与 Mamba
 
 > 用状态空间模型替代/补充 Attention，解决 Transformer 在长序列上的 O(n²) 复杂度问题。

@@ -1,3 +1,8 @@
+---
+aliases:
+  - Benchmark集合
+---
+
 # Benchmark 集合（2025–2026 重点）
 
 > 按"能力维度"分类的主流评测集。配合 [[Eval Harness]] 使用。

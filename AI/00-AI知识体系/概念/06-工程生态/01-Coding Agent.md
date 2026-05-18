@@ -1,3 +1,8 @@
+---
+aliases:
+  - Coding Agent
+---
+
 # Coding Agent
 
 > 当前 AI Agent 落地最成熟、最火热的方向。按形态可分四类。

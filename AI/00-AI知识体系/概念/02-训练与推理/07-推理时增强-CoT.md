@@ -1,3 +1,8 @@
+---
+aliases:
+  - 推理时增强-CoT
+---
+
 # 推理时增强（CoT / ToT / Best-of-N / Self-Consistency / Reflection）
 
 > 不改模型权重，只在推理阶段用 prompt 技巧 + 多次采样 + 搜索，提升回答质量。

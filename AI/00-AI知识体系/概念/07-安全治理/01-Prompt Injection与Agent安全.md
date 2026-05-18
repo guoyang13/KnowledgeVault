@@ -1,3 +1,8 @@
+---
+aliases:
+  - Prompt Injection与Agent安全
+---
+
 # Prompt Injection 与 Agent 安全
 
 > Agent 一旦能"看网页 / 读文件 / 调工具"，**间接 prompt injection** 就成为头号风险——比传统 jailbreak 还危险。

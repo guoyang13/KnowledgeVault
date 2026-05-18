@@ -1,3 +1,8 @@
+---
+aliases:
+  - MCP协议
+---
+
 # MCP（Model Context Protocol）
 
 > Anthropic 发起、目前已成事实标准的 Agent ↔ 工具/资源 通信协议。可把它视为"AI 时代的 USB-C"。

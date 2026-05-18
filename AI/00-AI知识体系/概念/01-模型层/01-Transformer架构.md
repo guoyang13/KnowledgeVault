@@ -1,3 +1,8 @@
+---
+aliases:
+  - Transformer架构
+---
+
 # Transformer 架构
 
 > 当前所有主流 LLM 的底层架构，核心是 Self-Attention + Decoder-only 设计。
