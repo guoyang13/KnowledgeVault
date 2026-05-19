@@ -42,6 +42,15 @@ N-gram LM → RNN/LSTM LM → Seq2Seq + Attention → Transformer (2017)
 - **并行**：同一层内各位置可并行算（训练吞吐远高于 RNN）
 - 详见 [[AI/00-AI知识体系/概念/00-基础与LLM概论/07-注意力机制直觉-QKV|注意力机制直觉-QKV]] 与 [[AI/00-AI知识体系/概念/01-模型层/01-Transformer架构|Transformer架构]]
 
+## Transformer 真正解决的痛点
+
+| 痛点 | RNN / CNN 的问题 | Transformer 的解决方式 |
+|---|---|---|
+| 长距离依赖 | RNN 要把历史压进一个隐状态；CNN 要堆很多层 | Attention 让任意两个位置直接交互 |
+| 训练吞吐 | RNN 时间步串行 | 同一层内所有位置可并行 |
+| 表示灵活性 | 固定方向或局部窗口更强 | 多头注意力可学习多种关系 |
+| 扩展性 | 难以吃下超大数据和模型规模 | 更适合 GPU/TPU 大规模训练 |
+
 ## 为何 LLM 多用 Decoder-only
 
 | 架构 | 典型用途 | 代表 |
@@ -53,11 +62,24 @@ N-gram LM → RNN/LSTM LM → Seq2Seq + Attention → Transformer (2017)
 因果掩码（Causal Mask）：位置 \(t\) 只能看见 \(\le t\) 的 token，保证训练与自回归推理一致。  
 当前 **Chat LLM 主流 = 堆叠 Decoder 层 + 因果 LM 目标**。
 
+## 读论文时怎么用这段历史
+
+- 看到 **Encoder-only**，优先联想到理解、分类、embedding。
+- 看到 **Encoder-Decoder**，优先联想到输入输出分离的生成任务，如翻译、摘要。
+- 看到 **Decoder-only**，优先联想到自回归生成、Chat、代码、Agent。
+- 看到 **Linear Attention / SSM / Mamba**，通常是在挑战标准 Attention 的 \(O(n^2)\) 成本。
+
 ## 之后的新方向（点到为止）
 
 - **长上下文**：稀疏 Attention、[[AI/00-AI知识体系/概念/01-模型层/06-新架构-SSM与Mamba|SSM与Mamba]]、滑动窗口
 - **效率**：[[AI/00-AI知识体系/概念/01-模型层/02-MoE|MoE]]、[[AI/00-AI知识体系/概念/02-训练与推理/06-推理加速三件套|推理加速三件套]]
 - **能力**：[[AI/00-AI知识体系/概念/01-模型层/03-推理模型|推理模型]]、[[AI/00-AI知识体系/概念/02-训练与推理/02-RLVR|RLVR]]
+
+## 学习检查
+
+1. RNN 为什么难以高效并行训练长文本？
+2. Attention 相比“把整句压成一个向量”有什么优势？
+3. 为什么 Chat LLM 更常用 Decoder-only，而不是 Encoder-only？
 
 ## 与之相关
 
