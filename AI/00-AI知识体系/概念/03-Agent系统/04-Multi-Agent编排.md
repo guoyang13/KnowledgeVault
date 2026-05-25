@@ -20,11 +20,14 @@ aliases:
 - **消息协议**：是用自由文本还是结构化消息？后者更可控。
 - **终止条件**：很多 multi-agent 系统死循环，需要硬限制（步数、预算）。
 - **可观测**：每个 Agent 的 trace 都要能单独查看。
+- **职责边界**：planner / executor / reviewer / critic / router 等角色要有明确输入输出，不要让 Agent 随便聊天。
+- **协议边界**：MCP 连接工具，A2A 连接 Agent，ACP 连接宿主应用；不要把所有协作都塞进 prompt。
 
 ## 工程权衡
 - **更强**：分工 + 多视角能解决单 Agent 上下文挤爆的问题。
 - **更贵**：token 消耗 N 倍起步。
 - **更难调试**：失败原因常常埋在 Agent 间通信里。
+- **不总是必要**：如果任务稳定、流程清晰、单 Agent 能可靠完成，多 Agent 可能只是增加协调成本。
 
 ## 框架
 - **LangGraph**（事实标准的图式 Agent 框架）
@@ -35,6 +38,8 @@ aliases:
 - [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/10-Agent Skills与协议生态|Agent Skills与协议生态]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/09-Agent学习路线与项目阶梯|Agent学习路线与项目阶梯]]
 - [[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]
 
 ## 延伸阅读

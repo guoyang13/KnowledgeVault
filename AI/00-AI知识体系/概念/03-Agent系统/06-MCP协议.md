@@ -30,7 +30,13 @@ aliases:
 ## 与 A2A 的关系
 - **MCP**：Agent ↔ 工具/资源（"用东西"）。
 - **A2A（Agent-to-Agent，Google 推动）**：Agent ↔ Agent（"和别的 Agent 协作"）。
+- **ACP（Agent Client Protocol）**：Agent ↔ 宿主应用 / IDE / 终端（"接入运行环境"）。
 - 二者互补，不竞争。
+
+## 与 Skill 的关系
+- **Skill**：任务流程知识，告诉 Agent 什么时候用、怎么做、如何验证。
+- **MCP**：工具和资源连接协议，告诉 Agent 可以调用什么外部能力。
+- 一个强 Agent 往往同时需要：高质量 harness + MCP 工具生态 + 可复用 skills。
 
 ## 安全注意
 - MCP 工具描述本身可能携带 [[AI/00-AI知识体系/概念/07-安全治理/01-Prompt Injection与Agent安全|prompt injection]]。
@@ -39,6 +45,7 @@ aliases:
 ## 与之相关
 - [[AI/00-AI知识体系/概念/03-Agent系统/03-Tool Use与Function Calling|Tool Use与Function Calling]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/10-Agent Skills与协议生态|Agent Skills与协议生态]]
 - [[AI/00-AI知识体系/概念/07-安全治理/01-Prompt Injection与Agent安全|Prompt Injection与Agent安全]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/07-Computer Use与Browser Agent|Computer Use与Browser Agent]]
 

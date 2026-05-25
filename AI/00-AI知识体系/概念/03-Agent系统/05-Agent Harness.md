@@ -25,10 +25,11 @@ aliases:
 | 类型 | 代表 |
 |---|---|
 | 学术 Coding Agent | SWE-Agent、Mini-SWE-Agent、Agentless |
-| 工业 IDE/CLI Agent | Cursor Agent、Codex CLI、Claude Code、Aider、Gemini CLI |
+| 工业 IDE/CLI Agent | Cursor Agent、Codex CLI、Claude Code、Aider、Gemini CLI、OpenCode |
 | 通用软件工程 Agent | Devin、OpenHands、Jules |
 | GUI / Browser Agent | Operator、browser-use、Computer Use Reference |
-| 通用 Agent 框架 | LangGraph、AutoGen、CrewAI |
+| Personal / Always-on Agent | OpenClaw、Hermes Agent、CyberClaw |
+| 通用 Agent 框架 | LangGraph、OpenAI Agents SDK、Pydantic AI、Qwen-Agent、AutoGen、CrewAI |
 
 ## Scaffold 这个词
 - 在论文里常与 harness 互换使用。
@@ -38,16 +39,20 @@ aliases:
 - **更长 horizon**：从分钟级到多小时甚至多日级任务。
 - **更少 prompt，更多结构**：从堆 prompt 转向结构化状态机 + 工具协议（[[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]）。
 - **统一权限模型**：Antigravity / Cursor 等开始把 harness 的"许可层"标准化。
+- **可复用 Skills**：把一类任务的流程知识、脚本、模板和验收标准沉淀为 skill，而不是每次临场写 prompt。
+- **Trace / Replay / Eval**：harness 不只是执行器，也要能回放、观测和评测 agent 行为。
 
 ## 与之相关
 - [[AI/00-AI知识体系/概念/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/04-Multi-Agent编排|Multi-Agent编排]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/06-MCP协议|MCP协议]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/09-Agent学习路线与项目阶梯|Agent学习路线与项目阶梯]]
+- [[AI/00-AI知识体系/概念/03-Agent系统/10-Agent Skills与协议生态|Agent Skills与协议生态]]
 - [[AI/00-AI知识体系/概念/06-工程生态/01-Coding Agent|Coding Agent]]
 - [[AI/00-AI知识体系/概念/05-评测/01-Eval Harness|Eval Harness]]
 
 ## 延伸阅读
 - SWE-Agent 论文 (Princeton, 2024)
 - *Building Effective Agents* (Anthropic)
-- OpenHands / Aider / Claude Code 官方架构文档
+- Claude Code / Codex / OpenClaw / Hermes Agent / LangGraph 官方文档与源码
