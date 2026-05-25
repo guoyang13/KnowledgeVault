@@ -1,0 +1,57 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <version>2.3.12.RELEASE</version>
+  </parent>
+
+  <groupId>com.mq.cloud</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>parent</name>
+  <url>http://maven.apache.org</url>
+  <modules>
+    <module>mq2.3_rmqdemo</module>
+      <module>mq2.6_trace</module>
+      <module>mq2.7_spmc_consumer</module>
+    <module>mq2.7_spmc_producer</module>
+      <module>mq2.8_orderly_producer</module>
+    <module>mq2.8_orderly_consumer</module>
+    <module>mq2.9_delay</module>
+    <module>mq2.10_batch</module>
+    <module>mq2.11_filter</module>
+      <module>mq2.12_transaction</module>
+    <module>mq2.13_retry</module>
+    <module>mq5.2_kafka</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <com.cloud.version>Hoxton.SR12</com.cloud.version>
+    <com.alibaba.cloud.version>2.2.8.RELEASE</com.alibaba.cloud.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${com.cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+        <version>${com.alibaba.cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

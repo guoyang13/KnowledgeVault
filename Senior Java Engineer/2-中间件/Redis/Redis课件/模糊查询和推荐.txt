@@ -1,0 +1,162 @@
+POST _bulk?filter_path=items.*.error
+{"index":{"_index":"product","_id":"13"}}
+{"name":"zhangsan1"}
+{"index":{"_index":"product","_id":"14"}}
+{"name":"zhangsan2"}
+{"delete":{"_index":"product","_id":"10"}}
+{"create":{"_index":"product","_id":"13"}}
+{"name":"zhangsan1"}
+
+
+
+POST product/_bulk
+{"index":{"_id":"1"}}
+{"text":"城管打电话给你"} 
+{"index":{"_id":"2"}}
+{"text":"国家政策支持地摊经济发展"} 
+{"index":{"_id":"3"}}
+{"text":"张三打了李四"} 
+{"index":{"_id":"4"}}
+{"text":"小明被城管抓了"} 
+
+
+get product/_search
+{
+  "query":{
+    "wildcard": {
+      "text.keyword": {
+        "value": "*城管打电话*"
+      }
+    }
+  }
+}
+
+
+
+get product/_search
+{
+  "query":{
+    "regexp": {
+        "text": "[\\s\\S]*城[\\s\\S]*"
+    }
+  }
+}
+
+
+get product2/_search
+{
+  "query":{
+    "fuzzy": {
+        "text":{
+          "value":"act",
+          "fuzziness": 1,
+          "transpositions":true
+        }
+    }
+  }
+}
+
+
+
+
+get product2/_search
+{
+  "query":{
+    "match_phrase_prefix": {
+      "text": "zhangsan and l"
+    }
+  }
+}
+
+
+
+put my_index2
+{
+  "settings":{
+    "analysis":{
+      "filter":{
+        "2_3_ngram":{
+          "type":"ngram",
+          "min_gram":2,
+          "max_gram":3
+        }
+      },
+      "analyzer":{
+        "my_ngram":{
+          "type":"custom",
+          "filter":"2_3_ngram",
+          "tokenizer":"standard"
+        }
+      }
+    }
+  },
+  "mappings":{
+    "properties":{
+      "text":{
+        "type":"text",
+        "analyzer":"my_ngram",
+        "search_analyzer":"standard"
+      }
+    }
+  }
+}
+
+
+
+edge_ngram
+
+
+
+get my_index2/_search
+{
+  "query":{
+    "match_phrase": {
+      "text": "my eng is g"
+    }
+  }
+  
+}
+
+
+
+ put product
+ {
+   "mappings":{
+     "properties":{
+       "text":{
+         "type":"text",
+         "analyzer":"ik_max_word",
+         "fields":{
+           "suggest":{
+             "type":"completion",
+              "analyzer":"ik_max_word"
+           }
+         }
+       },
+       "content":{
+         "type":"text",
+         "analyzer":"ik_max_word"
+       }
+     }
+   }
+ }
+
+
+get product/_search
+{
+  "suggest":{
+    "my_suggest":{
+      "prefix":"城管",
+      "completion":{
+        "field":"text.suggest"
+      }
+    } 
+  }
+}
+
+
+
+
+
+
+
