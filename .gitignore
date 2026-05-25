@@ -4,3 +4,15 @@
 
 # macOS 本机元数据
 .DS_Store
+
+# 导入源码资料时产生的仓库元数据与构建缓存
+Senior Java Engineer/1-Java/框架/mybatis-3-src/.git/
+Senior Java Engineer/1-Java/框架/mybatis-3-src/.git.local/
+Senior Java Engineer/1-Java/框架/mybatis-3-src/.idea/
+Senior Java Engineer/1-Java/框架/mybatis-3-src/target/
+Senior Java Engineer/1-Java/框架/spring-boot-2.6.14/.git/
+Senior Java Engineer/1-Java/框架/spring-boot-2.6.14/.git.local/
+Senior Java Engineer/1-Java/框架/spring-boot-2.6.14/.gradle/
+Senior Java Engineer/1-Java/框架/spring-boot-2.6.14/.idea/
+Senior Java Engineer/1-Java/框架/spring-boot-2.6.14/buildSrc/.gradle/
+Senior Java Engineer/1-Java/框架/spring-boot-2.6.14/buildSrc/build/
