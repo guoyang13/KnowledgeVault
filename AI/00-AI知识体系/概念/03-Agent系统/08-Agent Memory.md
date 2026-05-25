@@ -14,7 +14,7 @@ aliases:
 - **Procedural Memory（程序性）**：技能与流程（"修这种 bug 通常用这个套路"）。
 
 ## 实现方式
-- **向量检索**：把对话/事件嵌入向量库，按相似度召回。
+- **向量检索**：把对话/事件嵌入向量库，按相似度召回；底层见 [[AI/00-AI知识体系/概念/04-RAG进阶/03-Embedding模型与向量检索|Embedding模型与向量检索]]。
 - **结构化存储**：键值对 / 关系表，存偏好、事实、任务状态。
 - **图记忆**：实体 + 关系，便于推理（Zep、Mem0 等）。
 - **Memory Consolidation**：定期"睡眠整理"——压缩冗余、提炼总结、过期遗忘。
@@ -33,6 +33,7 @@ aliases:
 
 ## 与之相关
 - [[AI/00-AI知识体系/概念/04-RAG进阶/01-RAG基础|RAG基础]]
+- [[AI/00-AI知识体系/概念/04-RAG进阶/03-Embedding模型与向量检索|Embedding模型与向量检索]]
 - [[AI/00-AI知识体系/概念/06-工程生态/02-Context Engineering|Context Engineering]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/05-Agent Harness|Agent Harness]]
 - [[AI/00-AI知识体系/概念/01-模型层/07-上下文与KV Cache|上下文与KV Cache]]

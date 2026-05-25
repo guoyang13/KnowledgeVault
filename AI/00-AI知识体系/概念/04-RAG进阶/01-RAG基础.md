@@ -28,6 +28,7 @@ aliases:
 ## 嵌入模型
 - **闭源**：OpenAI text-embedding-3、Voyage、Cohere。
 - **开源**：BGE 系（中英顶流）、E5、GTE、Jina、Qwen-Embedding。
+- 选型、相似度、评测和常见坑见 [[AI/00-AI知识体系/概念/04-RAG进阶/03-Embedding模型与向量检索|Embedding模型与向量检索]]。
 
 ## 向量数据库
 - 开源：**pgvector**、**Milvus**、**Qdrant**、**Weaviate**、**LanceDB**、**Chroma**。
@@ -35,6 +36,7 @@ aliases:
 
 ## 与之相关
 - [[AI/00-AI知识体系/概念/04-RAG进阶/02-GraphRAG与Agentic RAG|GraphRAG与Agentic RAG]]
+- [[AI/00-AI知识体系/概念/04-RAG进阶/03-Embedding模型与向量检索|Embedding模型与向量检索]]
 - [[AI/00-AI知识体系/概念/03-Agent系统/08-Agent Memory|Agent Memory]]
 - [[AI/00-AI知识体系/概念/06-工程生态/02-Context Engineering|Context Engineering]]
 - [[AI/00-AI知识体系/概念/01-模型层/07-上下文与KV Cache|上下文与KV Cache]]
