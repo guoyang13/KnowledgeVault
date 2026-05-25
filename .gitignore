@@ -1,3 +1,6 @@
 # Obsidian 工作区布局（本机/会话相关，不宜纳入版本库）
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
+
+# macOS 本机元数据
+.DS_Store
