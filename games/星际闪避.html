@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>星际闪避 · 摸鱼小游戏</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #0a0e1a;
+      font-family: "SF Pro Display", "PingFang SC", system-ui, sans-serif;
+      color: #e8ecf4;
+      touch-action: none;
+      user-select: none;
+    }
+    #wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 80px rgba(99, 140, 255, 0.15);
+    }
+    #hud {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      z-index: 2;
+    }
+    #hud span { opacity: 0.85; }
+    #hud .score { color: #7dd3fc; font-size: 18px; }
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(6, 10, 22, 0.72);
+      backdrop-filter: blur(8px);
+      z-index: 3;
+      text-align: center;
+      padding: 24px;
+    }
+    #overlay.hidden { display: none; }
+    h1 {
+      font-size: clamp(28px, 6vw, 42px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #93c5fd, #c4b5fd, #f9a8d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .sub {
+      color: #94a3b8;
+      font-size: 15px;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .btn {
+      border: none;
+      padding: 14px 36px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 999px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover { transform: scale(1.05); box-shadow: 0 12px 40px rgba(59, 130, 246, 0.55); }
+    .btn:active { transform: scale(0.98); }
+    .tips {
+      margin-top: 24px;
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.8;
+    }
+    kbd {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      font-family: inherit;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="hud">
+      <span class="score">得分 <b id="score">0</b></span>
+      <span>最高 <b id="best">0</b></span>
+      <span>连击 <b id="combo">×1</b></span>
+    </div>
+    <canvas id="c"></canvas>
+    <div id="overlay">
+      <h1>星际闪避</h1>
+      <p class="sub" id="msg">躲开陨石，吃掉星星，看你能撑多久</p>
+      <button class="btn" id="startBtn">开始游戏</button>
+      <p class="tips">
+        <kbd>WASD</kbd> 或方向键移动 · 鼠标跟随 · 手机拖动<br />
+        星星 +10 分 · 连击越高加分越多
+      </p>
+    </div>
+  </div>
+  <script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const comboEl = document.getElementById('combo');
+  const msgEl = document.getElementById('msg');
+
+  const BEST_KEY = 'star-dodge-best';
+  let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+  bestEl.textContent = best;
+
+  const W = 480;
+  const H = 720;
+  canvas.width = W;
+  canvas.height = H;
+
+  const state = {
+    running: false,
+    score: 0,
+    combo: 1,
+    comboTimer: 0,
+    time: 0,
+    spawnRate: 1.2,
+    player: { x: W / 2, y: H - 80, r: 14, vx: 0, vy: 0 },
+    keys: {},
+    pointer: null,
+    rocks: [],
+    stars: [],
+    particles: [],
+    shake: 0,
+  };
+
+  const starsBg = Array.from({ length: 80 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    s: Math.random() * 1.5 + 0.3,
+    sp: Math.random() * 0.4 + 0.1,
+  }));
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  function spawnRock() {
+    const r = rand(12, 28);
+    state.rocks.push({
+      x: rand(r, W - r),
+      y: -r - 10,
+      r,
+      vy: rand(2.5, 4.5) + state.time * 0.008,
+      rot: Math.random() * Math.PI * 2,
+      vr: rand(-0.06, 0.06),
+      hue: rand(20, 45),
+    });
+  }
+
+  function spawnStar() {
+    state.stars.push({
+      x: rand(20, W - 20),
+      y: -20,
+      r: 10,
+      vy: rand(2, 3.2),
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+
+  function burst(x, y, color, n = 12) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = rand(2, 7);
+      state.particles.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: rand(20, 45),
+        color,
+        size: rand(2, 5),
+      });
+    }
+  }
+
+  function addScore(base) {
+    const gain = Math.floor(base * state.combo);
+    state.score += gain;
+    scoreEl.textContent = state.score;
+    state.comboTimer = 120;
+    if (state.combo < 8) state.combo += 0.15;
+    comboEl.textContent = '×' + state.combo.toFixed(1);
+  }
+
+  function reset() {
+    state.score = 0;
+    state.combo = 1;
+    state.comboTimer = 0;
+    state.time = 0;
+    state.spawnRate = 1.2;
+    state.player.x = W / 2;
+    state.player.y = H - 80;
+    state.player.vx = 0;
+    state.player.vy = 0;
+    state.rocks = [];
+    state.stars = [];
+    state.particles = [];
+    state.shake = 0;
+    scoreEl.textContent = '0';
+    comboEl.textContent = '×1';
+  }
+
+  function gameOver() {
+    state.running = false;
+    state.shake = 12;
+    if (state.score > best) {
+      best = state.score;
+      localStorage.setItem(BEST_KEY, String(best));
+      bestEl.textContent = best;
+      msgEl.textContent = `新纪录！得分 ${state.score}`;
+    } else {
+      msgEl.textContent = `撞上了… 得分 ${state.score}`;
+    }
+    startBtn.textContent = '再来一局';
+    overlay.classList.remove('hidden');
+  }
+
+  function start() {
+    reset();
+    state.running = true;
+    overlay.classList.add('hidden');
+    msgEl.textContent = '躲开陨石，吃掉星星，看你能撑多久';
+  }
+
+  function dist(ax, ay, bx, by) {
+    const dx = ax - bx, dy = ay - by;
+    return Math.hypot(dx, dy);
+  }
+
+  function update() {
+    if (!state.running) return;
+
+    state.time++;
+    if (state.time % 60 === 0) state.spawnRate *= 0.97;
+
+    const p = state.player;
+    const speed = 5.5;
+    let dx = 0, dy = 0;
+    if (state.keys['ArrowLeft'] || state.keys['a'] || state.keys['A']) dx -= 1;
+    if (state.keys['ArrowRight'] || state.keys['d'] || state.keys['D']) dx += 1;
+    if (state.keys['ArrowUp'] || state.keys['w'] || state.keys['W']) dy -= 1;
+    if (state.keys['ArrowDown'] || state.keys['s'] || state.keys['S']) dy += 1;
+
+    if (state.pointer) {
+      const tx = state.pointer.x * W;
+      const ty = state.pointer.y * H;
+      dx += (tx - p.x) * 0.08;
+      dy += (ty - p.y) * 0.08;
+    }
+
+    const len = Math.hypot(dx, dy) || 1;
+    p.vx += (dx / len) * speed * 0.35;
+    p.vy += (dy / len) * speed * 0.35;
+    p.vx *= 0.82;
+    p.vy *= 0.82;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.x = Math.max(p.r, Math.min(W - p.r, p.x));
+    p.y = Math.max(p.r, Math.min(H - p.r, p.y));
+
+    if (Math.random() < 1 / (state.spawnRate * 60)) spawnRock();
+    if (Math.random() < 1 / 180) spawnStar();
+
+    state.score += 0.05;
+    scoreEl.textContent = Math.floor(state.score);
+
+    if (state.comboTimer > 0) {
+      state.comboTimer--;
+    } else if (state.combo > 1) {
+      state.combo = Math.max(1, state.combo - 0.02);
+      comboEl.textContent = '×' + state.combo.toFixed(1);
+    }
+
+    for (let i = state.rocks.length - 1; i >= 0; i--) {
+      const r = state.rocks[i];
+      r.y += r.vy;
+      r.rot += r.vr;
+      if (r.y > H + 50) {
+        state.rocks.splice(i, 1);
+        addScore(2);
+        burst(r.x, H, '#64748b', 4);
+        continue;
+      }
+      if (dist(p.x, p.y, r.x, r.y) < p.r + r.r - 4) {
+        burst(p.x, p.y, '#f87171', 20);
+        gameOver();
+        return;
+      }
+    }
+
+    for (let i = state.stars.length - 1; i >= 0; i--) {
+      const s = state.stars[i];
+      s.y += s.vy;
+      s.phase += 0.12;
+      if (s.y > H + 30) { state.stars.splice(i, 1); continue; }
+      if (dist(p.x, p.y, s.x, s.y) < p.r + s.r) {
+        addScore(10);
+        burst(s.x, s.y, '#fde047', 16);
+        state.stars.splice(i, 1);
+      }
+    }
+
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      const pt = state.particles[i];
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+      pt.vy += 0.08;
+      pt.life--;
+      if (pt.life <= 0) state.particles.splice(i, 1);
+    }
+
+    if (state.shake > 0) state.shake *= 0.85;
+  }
+
+  function drawRock(r) {
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.rotate(r.rot);
+    const g = ctx.createRadialGradient(-r.r * 0.3, -r.r * 0.3, 0, 0, 0, r.r);
+    g.addColorStop(0, `hsl(${r.hue}, 25%, 45%)`);
+    g.addColorStop(1, `hsl(${r.hue}, 20%, 22%)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const rr = r.r * (0.75 + Math.sin(i * 2.1 + r.hue) * 0.2);
+      const px = Math.cos(a) * rr;
+      const py = Math.sin(a) * rr;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw() {
+    const shakeX = state.shake ? (Math.random() - 0.5) * state.shake : 0;
+    const shakeY = state.shake ? (Math.random() - 0.5) * state.shake : 0;
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#0f172a');
+    bg.addColorStop(1, '#020617');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    for (const s of starsBg) {
+      s.y += s.sp;
+      if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+      ctx.fillStyle = `rgba(255,255,255,${0.2 + s.s * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (const st of state.stars) {
+      const glow = 0.6 + Math.sin(st.phase) * 0.4;
+      ctx.save();
+      ctx.translate(st.x, st.y);
+      ctx.shadowColor = '#fde047';
+      ctx.shadowBlur = 16 * glow;
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        const a2 = a + Math.PI / 5;
+        ctx.lineTo(Math.cos(a) * st.r, Math.sin(a) * st.r);
+        ctx.lineTo(Math.cos(a2) * st.r * 0.4, Math.sin(a2) * st.r * 0.4);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    for (const r of state.rocks) drawRock(r);
+
+    for (const pt of state.particles) {
+      ctx.globalAlpha = pt.life / 45;
+      ctx.fillStyle = pt.color;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const p = state.player;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    const tilt = Math.max(-0.4, Math.min(0.4, p.vx * 0.06));
+    ctx.rotate(tilt);
+
+    ctx.shadowColor = '#60a5fa';
+    ctx.shadowBlur = 20;
+    const ship = ctx.createLinearGradient(0, -p.r * 1.4, 0, p.r);
+    ship.addColorStop(0, '#bae6fd');
+    ship.addColorStop(0.5, '#38bdf8');
+    ship.addColorStop(1, '#1d4ed8');
+    ctx.fillStyle = ship;
+    ctx.beginPath();
+    ctx.moveTo(0, -p.r * 1.5);
+    ctx.lineTo(p.r * 0.9, p.r);
+    ctx.lineTo(0, p.r * 0.6);
+    ctx.lineTo(-p.r * 0.9, p.r);
+    ctx.closePath();
+    ctx.fill();
+
+    const flame = 0.5 + Math.random() * 0.5;
+    ctx.fillStyle = `rgba(251, 146, 60, ${flame})`;
+    ctx.beginPath();
+    ctx.moveTo(-p.r * 0.35, p.r * 0.7);
+    ctx.lineTo(0, p.r * (1.2 + flame * 0.6));
+    ctx.lineTo(p.r * 0.35, p.r * 0.7);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('keydown', e => {
+    state.keys[e.key] = true;
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+  });
+  window.addEventListener('keyup', e => { state.keys[e.key] = false; });
+
+  function setPointer(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    state.pointer = {
+      x: (clientX - rect.left) / rect.width,
+      y: (clientY - rect.top) / rect.height,
+    };
+  }
+  canvas.addEventListener('mousemove', e => setPointer(e.clientX, e.clientY));
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (e.touches[0]) setPointer(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches[0]) setPointer(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  startBtn.addEventListener('click', start);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' && !state.running && !overlay.classList.contains('hidden')) {
+      e.preventDefault();
+      start();
+    }
+    if (e.key === ' ' && state.running) e.preventDefault();
+  });
+
+  loop();
+})();
+  </script>
+</body>
+</html>
