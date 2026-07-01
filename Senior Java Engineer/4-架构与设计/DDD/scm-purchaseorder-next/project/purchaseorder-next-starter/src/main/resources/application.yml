@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: scm-purchaseorder-next-service
+
+purchaseorder-next:
+  architecture:
+    mode: skeleton
+    description: DDD and hexagonal architecture skeleton for purchase order service.
