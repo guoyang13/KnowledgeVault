@@ -64,6 +64,15 @@ Infrastructure          ← MyBatis、Redis、MQ、Feign
 | 分布式锁 | Redisson；关键写加 **业务版本校验** |
 | 幂等 | 网关 Idempotency-Key + DB 唯一索引 |
 
+### Spring 事务风险清单
+
+| 风险 | 检查点 | 推荐做法 |
+|---|---|---|
+| 远程调用放在事务内 | `@Transactional` 方法里调用 Feign/MQ/外部支付 | 本地事务提交后通过 Outbox/MQ 通知 |
+| 自调用导致事务失效 | 同类方法直接调用事务方法 | 拆服务或通过代理调用 |
+| 隔离级别误判 | 以为 RR 防所有并发异常 | 对跨行不变量使用锁、唯一约束、物化冲突或 Serializable |
+| 长事务 | 批量处理、外部 IO、用户交互 | 缩短事务，批量分页，异步化 |
+
 ## 消息与 CDC
 
 | DDIA 概念 | Java 实践 |
@@ -72,6 +81,16 @@ Infrastructure          ← MyBatis、Redis、MQ、Feign
 | 领域事件 | Spring `ApplicationEvent`（进程内）/ MQ（跨服务） |
 | CDC | Canal Client → 更新 ES/Redis |
 | Schema 演化 | Kafka + Confluent Schema Registry + Avro |
+
+### 消息与流处理检查
+
+| 主题 | 检查点 | 推荐做法 |
+|---|---|---|
+| 可靠发布 | DB 成功但消息失败 | Outbox / 事务消息 / CDC |
+| 重复消费 | at-least-once 常态 | 幂等键、唯一索引、状态机防回退 |
+| 顺序 | 是否需要全局顺序 | 尽量按业务 Key 保证局部顺序 |
+| 死信 | 失败消息是否可见可修复 | DLQ、告警、人工重放工具 |
+| Schema | 消费者升级顺序 | 兼容字段、Schema Registry、灰度 |
 
 ## 编码与 API 演化
 
@@ -90,6 +109,28 @@ Infrastructure          ← MyBatis、Redis、MQ、Feign
 | 用 `System.currentTimeMillis()` 排序事件 | 第 8 章时钟 |
 | 全局 `@Cacheable` 无 TTL/失效 | 第 5 章一致读 |
 | 大事务扫全表 | 第 3、7 章 |
+
+## Java 项目默认推荐模式
+
+| 需求 | 默认推荐 | 例外 |
+|---|---|---|
+| 单服务核心写入 | 本地事务 + 数据库约束 | 需要跨库强一致时重新建模 |
+| 跨服务通知 | Outbox + MQ + 幂等消费者 | 对立即一致有强需求时评估 TCC |
+| 搜索同步 | CDC/Outbox -> ES | 极低延迟可加读时回源 |
+| 缓存一致性 | Cache Aside + TTL + 失效重试 | 强一致读走 DB |
+| 分布式锁 | 少用；必须用时加 fencing/版本 | 单库唯一约束能解决时不用锁 |
+| 报表分析 | OLTP -> CDC/ETL -> OLAP | 小规模可先只读副本 |
+
+## 上线前检查
+
+- [ ] 每个写 API 有幂等键或天然唯一约束。
+- [ ] 每个异步消费者能重复执行。
+- [ ] 每个读 API 标注读主、读从、读缓存还是读索引。
+- [ ] 每个衍生存储有重建脚本或重放方案。
+- [ ] 每个消息 topic 有分区键、保留时间、Schema 兼容策略。
+- [ ] 每个关键表有备份恢复演练。
+- [ ] 每个分布式锁使用点说明锁过期后的保护手段。
+- [ ] 每个跨服务流程有补偿、对账、人工修复入口。
 
 ## 与现有 DDD 笔记联动
 
