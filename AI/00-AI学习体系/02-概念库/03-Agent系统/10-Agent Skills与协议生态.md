@@ -183,6 +183,10 @@ Skill 负责某类任务的经验沉淀：
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/09-Agent学习路线与项目阶梯|Agent学习路线与项目阶梯]]
 - [[AI/00-AI学习体系/02-概念库/07-安全治理/01-Prompt Injection与Agent安全|Prompt Injection与Agent安全]]
 
+## 外部参考
+
+- [[AI/00-AI学习体系/03-外部参考/JavaGuide-Agent专题/02-Agent-Skills详解|JavaGuide · Agent Skills 详解]] —— SKILL.md 写法、路由、八大坑
+
 ## 延伸阅读
 
 - Claude Code Skills / Agent Skills 文档

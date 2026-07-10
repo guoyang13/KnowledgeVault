@@ -31,6 +31,7 @@ aliases:
 - **A2A**：Agent 之间互相调用。
 
 ## 与之相关
+- [[AI/00-AI学习体系/02-概念库/00-基础与LLM概论/09-LLM调用与Agent多轮对话|LLM调用与Agent多轮对话]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/06-MCP协议|MCP协议]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/05-Agent Harness|Agent Harness]]

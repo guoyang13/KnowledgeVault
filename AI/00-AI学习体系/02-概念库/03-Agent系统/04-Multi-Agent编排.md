@@ -36,6 +36,7 @@ aliases:
 
 ## 与之相关
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
+- [[AI/00-AI学习体系/02-概念库/03-Agent系统/11-AI工作流-Graph与Loop|AI工作流-Graph与Loop]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/05-Agent Harness|Agent Harness]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/06-MCP协议|MCP协议]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/10-Agent Skills与协议生态|Agent Skills与协议生态]]

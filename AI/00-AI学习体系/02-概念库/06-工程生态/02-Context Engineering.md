@@ -42,6 +42,7 @@ aliases:
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/05-Agent Harness|Agent Harness]]
 
 ## 延伸阅读
+- [[AI/00-AI学习体系/03-外部参考/JavaGuide-Agent专题/05-Context-Engineering|JavaGuide · Context Engineering]]（Context Assembler、评测指标、长任务三法）
 - Andrej Karpathy 关于 Context Engineering 的推文/演讲
 - LangChain 博客 *The rise of Context Engineering*
 - 各 Coding Agent 公开的 system prompt 解析
