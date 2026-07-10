@@ -1,6 +1,6 @@
 # JDK 8 到 JDK 23：JVM 重要变化
 
-> 这篇笔记用于理解从 [[JDK 8]] 到 [[JDK 23]]，[[JVM]] 在运行时、GC、模块化、诊断能力、并发模型和升级兼容性上的关键变化。
+> 版本演进总览。专题深挖见 [[1000-JVM专题导航]]（1001～1006）。
 
 ## 一句话概括
 
@@ -103,7 +103,7 @@ JDK 8 常见默认是 Parallel GC，很多服务端项目也会使用 CMS 或 G1
 
 ### JDK 9：G1 成为默认 GC
 
-JDK 9 开始，G1 成为默认 GC。
+JDK 9 开始，G1 成为默认 GC。详见 [[1004-G1垃圾回收与堆内存]]。
 
 G1 的堆不再只是物理上连续地分为 Young / Old，而是切成多个 Region：
 
@@ -119,7 +119,7 @@ Heap
 
 ### JDK 11 到 JDK 17：低延迟 GC 成熟
 
-这一阶段重点是低延迟 GC：
+这一阶段重点是低延迟 GC。ZGC 详见 [[1005-ZGC垃圾回收与堆内存]]。
 
 - JDK 11：ZGC 实验性引入。
 - JDK 12：Shenandoah 实验性引入。
@@ -135,9 +135,7 @@ JDK 23 中，如果使用：
 -XX:+UseZGC
 ```
 
-默认使用 Generational ZGC。
-
-也就是说，ZGC 也开始更强调分代思想。
+默认使用 Generational ZGC。详见 [[1005-ZGC垃圾回收与堆内存]] §13。
 
 ## 3. 模块化与强封装
 
@@ -201,7 +199,7 @@ JDK 9 引入统一日志系统：
 -Xlog:gc*:file=gc.log:time,uptime,level,tags
 ```
 
-还可以看类加载、Safepoint、JIT 等：
+还可以看类加载、Safepoint、JIT 等（[[1001-ClassLoader类加载机制|类加载]]、[[1002-SPI机制|SPI]]、[[1003-TCCL线程上下文类加载器|TCCL]]）：
 
 ```bash
 -Xlog:class+load
@@ -522,16 +520,31 @@ StandardCharsets.UTF_8
 
 ## 13. 学习顺序
 
-建议按下面顺序学习：
+建议从 [[1000-JVM专题导航]] 进入，按模块学习：
 
-1. 先掌握 JDK 8 的 JVM 基础：堆、栈、方法区、类加载、GC。
-2. 理解 JDK 8 的永久代到 Metaspace。
-3. 学 G1 的 Region 模型和 GC 日志。
-4. 学 JDK 9 模块化和强封装。
-5. 学 JDK 11 的 JFR、Nest-Based Access、Dynamic Constants。
-6. 学 JDK 17 的强封装、LTS 升级兼容性。
-7. 学 JDK 21 的虚拟线程。
-8. 学 JDK 23 的 Generational ZGC 和高版本运行时趋势。
+**模块二：GC 与内存（建议先学）**
+
+```text
+1006 内存分配  →  1004 G1  →  1005 ZGC
+```
+
+**模块一：类加载**
+
+```text
+1001 ClassLoader  →  1002 SPI  →  1003 TCCL
+```
+
+**版本演进（本篇）**
+
+```text
+1. 本篇概览：Metaspace、模块化、JFR、虚拟线程
+2. 理解 JDK 8 永久代 → Metaspace
+3. JDK 9 模块化与强封装
+4. JDK 11 JFR、Nest-Based Access
+5. JDK 17 LTS 升级兼容性
+6. JDK 21 虚拟线程
+7. JDK 23+ 默认分代 ZGC 等趋势
+```
 
 ## 14. 参考资料
 
