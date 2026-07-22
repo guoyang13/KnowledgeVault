@@ -15,7 +15,7 @@ updated: 2026-07-10
 >
 > 导航：[[AI/00-AI学习体系/03-外部参考/JavaGuide-Agent专题/00-JavaGuide-Agent专题-导航|JavaGuide Agent 专题导航]]
 >
-> 本地对照：[[AI/00-AI学习体系/02-概念库/00-基础与LLM概论/10-Prompt工程入门与实践|Prompt工程入门与实践]]（索引）
+> 本地对照：[[AI/00-AI学习体系/02-概念库/00-基础与LLM概论/10-Prompt工程入门与实践|Prompt工程入门与实践]]
 
 ## 核心观点
 

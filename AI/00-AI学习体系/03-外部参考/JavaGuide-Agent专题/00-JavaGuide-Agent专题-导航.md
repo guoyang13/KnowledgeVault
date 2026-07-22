@@ -16,6 +16,8 @@ updated: 2026-07-10
 >
 > 抓取日期：2026-07-10。图片/架构图未收录，代码块与表格已保留。
 
+↑ [[AI/00-AI学习体系/03-外部参考/00-外部参考导航|外部参考导航]] · [[AI/00-AI学习体系/02-概念库/03-Agent系统/00-Agent系统导航|Agent系统导航]]
+
 ## 阅读顺序
 
 ```text
@@ -41,7 +43,7 @@ updated: 2026-07-10
 | Agent 核心概念 | [[AI/00-AI学习体系/02-概念库/03-Agent系统/01-Workflow vs Agent\|Workflow vs Agent]]、[[AI/00-AI学习体系/02-概念库/03-Agent系统/02-ReAct与Agent范式\|ReAct与Agent范式]] | JavaGuide 偏演进时间线与选型表 |
 | Skills | [[AI/00-AI学习体系/02-概念库/03-Agent系统/10-Agent Skills与协议生态\|Agent Skills与协议生态]] | JavaGuide 含 SKILL.md 写法与 8 坑 |
 | Workflow/Graph/Loop | [[AI/00-AI学习体系/02-概念库/03-Agent系统/11-AI工作流-Graph与Loop\|AI工作流-Graph与Loop]] | 本地含 LangGraph Python；JavaGuide 含 Spring AI Alibaba |
-| Prompt | [[AI/00-AI学习体系/02-概念库/00-基础与LLM概论/10-Prompt工程入门与实践\|Prompt工程入门与实践]]（索引已列） | JavaGuide 含企业安全与 Spring AI 结构化输出 |
+| Prompt | [[AI/00-AI学习体系/02-概念库/00-基础与LLM概论/10-Prompt工程入门与实践\|Prompt工程入门与实践]] | JavaGuide 含企业安全与 Spring AI 结构化输出 |
 | Context | [[AI/00-AI学习体系/02-概念库/06-工程生态/02-Context Engineering\|Context Engineering]] | JavaGuide 含 Context Assembler 伪代码与评测指标 |
 | MCP / Tools | [[AI/00-AI学习体系/02-概念库/03-Agent系统/06-MCP协议\|MCP协议]]、[[AI/00-AI学习体系/02-概念库/03-Agent系统/03-Tool Use与Function Calling\|Tool Use]] | — |
 | Harness | [[AI/00-AI学习体系/02-概念库/03-Agent系统/05-Agent Harness\|Agent Harness]] | JavaGuide 主文仅提及，专题另有独立文 |

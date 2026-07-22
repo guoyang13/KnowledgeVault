@@ -10,7 +10,9 @@ aliases:
 > 更新时间：2026-07-09。
 > 把 **AI 工作流（业务层）**、**Graph（结构层）**、**Loop（控制层）** 三层概念拆开，并给出逐步执行示例与 toB 场景对照。
 >
-> 前置：[[AI/00-AI学习体系/02-概念库/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]]
+> **定位**：实现级专题，重点是 Graph、Loop、状态传递和手写/LangGraph 代码。第一次了解 AI 工作流先读 [[AI/00-AI学习体系/02-概念库/03-Agent系统/12-AI工作流入门与实践|AI工作流入门与实践]]。
+>
+> 前置：[[AI/00-AI学习体系/02-概念库/03-Agent系统/01-Workflow vs Agent|Workflow vs Agent]] · 导航：[[AI/00-AI学习体系/02-概念库/03-Agent系统/00-Agent系统导航|Agent系统导航]]
 
 ## 三层关系（先记住这张）
 

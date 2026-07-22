@@ -84,7 +84,7 @@ DeepSeek 在 Hugging Face / ModelScope / GitHub 公开发布**模型权重**（�
 
 ### 1. Ollama — 个人最简单
 
-详见 [[AI/Tools/ollama/Ollama|Ollama]]。
+详见 [[AI/02-环境与实操/Tools/ollama/Ollama|Ollama]]。
 
 ```bash
 ollama pull deepseek-r1:7b
@@ -146,7 +146,7 @@ curl https://api.deepseek.com/chat/completions \
 - 训练与微调：[[AI/00-AI学习体系/02-概念库/02-训练与推理/10-训练蒸馏与微调实战|训练蒸馏与微调实战]]
 - RLVR：[[AI/00-AI学习体系/02-概念库/02-训练与推理/02-RLVR|RLVR]]
 - 模型地图：[[AI/00-AI学习体系/02-概念库/08-前沿动态/01-主流模型地图-2026-07|主流模型地图 2026-07]]
-- Ollama 详解：[[AI/Tools/ollama/Ollama|Ollama]] · [[AI/Tools/ollama/Ollama   API|Ollama API]]
+- Ollama 详解：[[AI/02-环境与实操/Tools/ollama/Ollama|Ollama]] · [[AI/02-环境与实操/Tools/ollama/Ollama-API|Ollama API]]
 
 ## 对话整理入口
 

@@ -48,6 +48,7 @@ aliases:
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/10-Agent Skills与协议生态|Agent Skills与协议生态]]
 - [[AI/00-AI学习体系/02-概念库/07-安全治理/01-Prompt Injection与Agent安全|Prompt Injection与Agent安全]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/07-Computer Use与Browser Agent|Computer Use与Browser Agent]]
+- [[AI/00-AI学习体系/02-概念库/06-工程生态/10-Spring-AI与MCP|Spring-AI与MCP]] — Java 侧 MCP Server/Client 实现
 
 ## 延伸阅读
 - modelcontextprotocol.io 官方文档

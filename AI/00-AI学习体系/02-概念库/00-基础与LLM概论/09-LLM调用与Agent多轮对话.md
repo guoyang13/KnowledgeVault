@@ -9,6 +9,10 @@ aliases:
 
 > 更新时间：2026-07-09（v2：请求/响应字段详解 + 多次请求分步图）。
 > 整合：怎么调 LLM、**请求参数逐字段**、**响应结构逐字段**、messages、Agent 多轮与 tool calling、分步时序图。
+>
+> **定位**：这是一篇 API 与消息协议的专题参考，不要求首次学习时顺序读完。先读第 1、4、5、8 节建立主链路；需要查字段或实现循环时再读第 2、3、6、7 节。
+>
+> 导航：[[AI/00-AI学习体系/02-概念库/00-基础与LLM概论/00-LLM基础学习导航|LLM基础学习导航]] · [[AI/00-AI学习体系/02-概念库/03-Agent系统/00-Agent系统导航|Agent系统导航]]
 
 ---
 
@@ -863,6 +867,8 @@ append assistant → 有 tool_calls? → 执行 → append tool → 再请求
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/02-ReAct与Agent范式|ReAct与Agent范式]]
 - [[AI/00-AI学习体系/02-概念库/03-Agent系统/11-AI工作流-Graph与Loop|AI工作流-Graph与Loop]]
 - [[AI/00-AI学习体系/02-概念库/08-前沿动态/04-DeepSeek开源部署指南|DeepSeek开源部署指南]]
+- [[AI/00-AI学习体系/02-概念库/06-工程生态/04-Spring-AI入门与API|Spring-AI入门与API]]（Java 侧 Message / Tool 封装）
+- [[AI/00-AI学习体系/02-概念库/06-工程生态/05-Spring-AI提示词角色与对话拼接|Spring-AI提示词角色与对话拼接]]
 
 ## 自测
 

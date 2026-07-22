@@ -8,7 +8,7 @@ aliases:
 > 把模型稳定、高吞吐、低延迟地对外提供服务的系统层，核心是调度、KV Cache 管理和硬件利用率。
 
 ## 关键点
-- **推理引擎**：vLLM、SGLang、TensorRT-LLM、TGI、llama.cpp、MLX、[[AI/Tools/ollama/Ollama|Ollama]]（个人本地首选）。
+- **推理引擎**：vLLM、SGLang、TensorRT-LLM、TGI、llama.cpp、MLX、[[AI/02-环境与实操/Tools/ollama/Ollama|Ollama]]（个人本地首选）。
 - **调度能力**：continuous batching、chunked prefill、prefix cache、speculative decoding。
 - **部署指标**：TTFT、TPOT、吞吐、并发、显存占用、成本/百万 token。
 - **生产关注**：限流、队列、熔断、模型热切换、可观测、灰度发布。
