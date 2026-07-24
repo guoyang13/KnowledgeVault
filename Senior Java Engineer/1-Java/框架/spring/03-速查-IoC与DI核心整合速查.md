@@ -57,15 +57,35 @@ IoC（思想：谁控制）
 
 ### 一句话定位
 
-| 概念                         | 类型         | 回答的问题                  | 比喻      |
-| -------------------------- | ---------- | ---------------------- | ------- |
-| **BeanDefinition**         | 元数据 / 蓝图   | Bean **长什么样**？         | 菜谱      |
-| **BeanDefinitionRegistry** | 注册表接口      | 蓝图**存哪、怎么登记**？         | 菜单档案柜   |
-| **BeanFactory**            | 容器接口       | **怎么拿到** Bean 实例？      | 整个厨房    |
-| **FactoryBean**            | 特殊 Bean 接口 | 这个 Bean **怎么生产另一个对象**？ | 厨房里的面点师 |
-| **ApplicationContext**     | 应用容器接口     | **怎么运行整个 Spring 应用**？  | 整栋餐厅    |
+| 概念 | 类型 | 回答的问题 | 厨房比喻 |
+|------|------|-----------|---------|
+| **BeanDefinition** | 元数据 / 蓝图 | Bean **长什么样**？ | 菜谱 |
+| **BeanDefinitionRegistry** | 注册表接口 | 蓝图 **存哪、怎么登记**？ | 菜谱档案柜 |
+| **BeanFactory** | 容器接口 | **怎么拿到** Bean 实例？ | 厨房 |
+| **FactoryBean** | 特殊 Bean 接口 | 这个 Bean **怎么生产另一个对象**？ | 面点师 |
+| **ApplicationContext** | 应用容器接口 | **怎么编排**应用（`refresh` / 环境 / 事件）？ | 餐厅经理 |
 
-> 厨房比喻扩展（主厨、传菜口、品控等）→ [[04-速查-Spring厨房比喻大全]]
+> **比喻层级**（与 [[04-速查-Spring厨房比喻大全]] 统一）：**一家餐厅** = Spring IoC 整体；**经理**（Context）管 **厨房**（BeanFactory），**菜谱**（Definition）入 **档案柜**（Registry）。  
+> 厨房比喻扩展（Processor、Aware、主厨、传菜口等）→ [[04-速查-Spring厨房比喻大全#Processor 与 Aware 速查总表]]
+
+### Processor 与 Aware 一句话定位
+
+| 概念 | 类型 | 回答的问题 | 厨房比喻 | 时机 |
+|------|------|-----------|---------|------|
+| **BeanFactoryPostProcessor（BFPP）** | IoC 扩展点 | 实例化**前**怎么改蓝图？ | 开伙前改菜谱的**行政总厨** | `refresh` → `invokeBeanFactoryPostProcessors` |
+| **BeanPostProcessor（BPP）** | IoC 扩展点 | 实例化**后**怎么改实例？ | 上桌前**品控 / 加料员** | `createBean` → populate / initialize |
+| **Aware 接口族** | 生命周期回调 | Bean 怎么**感知**容器基础设施？ | 厨师的**知情权登记表** | `initializeBean` 内回调 |
+| **invokeAwareMethods** | 工厂内机制 | BeanFactory 级 Aware 谁处理？ | **厨房后勤**直接通知 | BeforeInit 之前 |
+| **ApplicationContextAwareProcessor** | BPP 实现 | Context 级 Aware 谁处理？ | **品控员**按表通知 | BPP `BeforeInit` |
+
+```text
+BFPP（改菜谱）→ 做菜 → populateBean（@Autowired，也是 BPP）
+  → invokeAwareMethods（后勤）→ BPP BeforeInit（品控 + Aware 按表）
+  → @PostConstruct → BPP AfterInit（AOP 代理）
+```
+
+→ 厨房比喻展开：[[04-速查-Spring厨房比喻大全#十、开伙前改菜谱 — BeanFactoryPostProcessor]] · [[04-速查-Spring厨房比喻大全#十一、上桌前加料 — BeanPostProcessor]] · [[04-速查-Spring厨房比喻大全#十二、知情权登记 — Aware 接口族]]  
+→ 深入：[[11-扩展点层-BeanFactoryPostProcessor详解]] · [[12-扩展点层-BeanPostProcessor详解]] · [[13-生命周期层-Aware体系详解]]
 
 ---
 
@@ -86,7 +106,7 @@ IoC（思想：谁控制）
 ## 关系总览
 
 ```text
-ApplicationContext（餐厅：编排 + 环境 + 事件）
+ApplicationContext（餐厅经理：编排 + 环境 + 事件）
     └── DefaultListableBeanFactory（厨房：Registry + Factory 合一）
             ├── BeanDefinitionRegistry
             │     └── beanDefinitionMap 存 BeanDefinition（菜谱档案）
@@ -104,7 +124,7 @@ graph TB
     end
 
     subgraph 注册层
-        BDR[BeanDefinitionRegistry<br/>注册表 / 档案柜]
+        BDR[BeanDefinitionRegistry<br/>注册表 / 菜谱档案柜]
     end
 
     subgraph 容器层
@@ -114,7 +134,7 @@ graph TB
     end
 
     subgraph 应用层
-        AC[ApplicationContext<br/>整栋餐厅]
+        AC[ApplicationContext<br/>餐厅经理]
     end
 
     BD -->|registerBeanDefinition| BDR
@@ -158,6 +178,21 @@ BFPP 改定义 → 注册 BPP → getBean/createBean
 
 → 对照总览 [[19-IoC扩展点三部曲对照]]
 
+### Processor 与 Aware 对照（机制 + 比喻）
+
+| | BFPP | BPP | Aware |
+|--|------|-----|-------|
+| **改什么** | BeanDefinition（蓝图） | Bean 实例 | 向 Bean 注入基础设施引用 |
+| **何时** | 实例化**前** | 实例化**后** | `initializeBean` 内 |
+| **厨房比喻** | 行政总厨改菜谱 | 品控加料 / 换代理 | 知情权登记 + 后勤/品控通知 |
+| **典型类** | `ConfigurationClassPostProcessor` | `AutowiredAnnotationBeanPostProcessor`、`AbstractAutoProxyCreator` | `ApplicationContextAware`、`BeanFactoryAware` |
+| **谁处理 Aware** | — | `ApplicationContextAwareProcessor`（BPP） | `invokeAwareMethods`（非 BPP） |
+| **与 DI 关系** | 可改定义影响注入 | `@Autowired` 在 populateBean 由 BPP 执行 | 回调 Context/Environment 等，**不是**业务 DI |
+
+**三者关系（一句话）**：BFPP 改**菜谱**；BPP 改**菜**（含 DI 与 AOP）；Aware 是 BPP/后勤在初始化阶段按**登记表**把厨房资源告诉厨师。
+
+→ 详见 [[04-速查-Spring厨房比喻大全#Processor 与 Aware 速查总表]]
+
 ### DI 解析链（一句话）
 
 ```text
@@ -175,6 +210,9 @@ BFPP 改定义 → 注册 BPP → getBean/createBean
 | BeanFactory / DLBF | `getBean()`、`createBean()`、Scope、三级缓存 |
 | FactoryBean | `getObjectForBeanInstance()`；`&` 前缀取工厂本身 |
 | ApplicationContext | `refresh()` 编排；Environment / 事件 / 条件装配 |
+| **BFPP** | 改 BeanDefinition；典型：`ConfigurationClassPostProcessor` |
+| **BPP** | 改实例；DI（`@Autowired`）、AOP 代理、Aware 按表通知 |
+| **Aware** | 生命周期回调；BeanFactory 级走后勤，Context 级走品控 BPP |
 
 ### 整合地图（结构 + 机制）
 
@@ -322,7 +360,8 @@ public interface FactoryBean<T> {
 
 典型场景：`ProxyFactoryBean`（AOP 代理）、MyBatis `MapperFactoryBean`。
 
-→ 详见 [[14-工厂Bean-BeanFactory与FactoryBean的区别]] · [[15-工厂Bean-FactoryBean接口体系详解]]
+→ 详见 [[14-工厂Bean-BeanFactory与FactoryBean的区别]] · [[15-工厂Bean-FactoryBean接口体系详解]]  
+→ Q&A：[[100-Q&A/动态代理是什么]] · [[100-Q&A/DDD分层-编译时运行时与Spring装配]]
 
 ---
 
@@ -399,6 +438,11 @@ getBean("&name")  → 要工厂
 | IoC 和 DI 区别？ | IoC=思想（容器控制）；DI=实现手段（注入依赖） |
 | 五概念各自干什么？ | Definition=蓝图，Registry=存蓝图，Factory=拿实例，FactoryBean=产产品，Context=跑应用 |
 | 除了五概念还有哪些核心？ | 两阶段、BFPP/BPP/Aware、resolveDependency、Scope、三级缓存、refresh |
+| BFPP 和 BPP 区别？ | BFPP 改 BeanDefinition（实例化前）；BPP 改 Bean 实例（实例化后） |
+| Aware 是什么？谁处理？ | 容器基础设施回调；BeanFactory 级=`invokeAwareMethods`；Context 级=`ApplicationContextAwareProcessor`（BPP） |
+| Aware 速查 Q&A | [[100-Q&A/Aware体系总结与常见问题]] · [[13-生命周期层-Aware体系详解#零、总结速查 ★]] |
+| Aware 和 @Autowired？ | Aware=厨房/经理等资源回调；@Autowired=业务 Bean 注入（也是 BPP 在 populateBean 执行） |
+| AOP 代理在哪？ | BPP `postProcessAfterInitialization`（`AbstractAutoProxyCreator`） |
 | `@Autowired` 底层？ | `AutowireCapableBeanFactory.resolveDependency()`（经 BPP） |
 | `getBean()` 最终谁执行？ | `DefaultListableBeanFactory.doGetBean()` |
 | FactoryBean 和 BeanFactory？ | 前者是容器里的工厂 Bean，后者是整个 IoC 容器 |
@@ -412,14 +456,15 @@ getBean("&name")  → 要工厂
 【思想】IoC 管控制，DI 来注入
 【结构】
   BeanDefinition      = 菜谱
-  BeanDefinitionRegistry = 档案柜
+  BeanDefinitionRegistry = 菜谱档案柜
   BeanFactory         = 厨房
   FactoryBean         = 面点师
-  ApplicationContext  = 餐厅
+  ApplicationContext  = 餐厅经理（管一家餐厅）
 【机制】
   两阶段              = 先登记蓝图，再下厨
-  BFPP                = 开伙前改菜谱
-  BPP                 = 上桌前加料 / 换代理
+  BFPP                = 开伙前改菜谱（行政总厨）
+  BPP                 = 上桌前加料 / 换代理（品控员）
+  Aware               = 知情权登记表（后勤 + 品控按表通知）
   resolveDependency   = 配餐员（@Autowired）
   三级缓存            = 循环依赖应急通道
 ```
@@ -437,6 +482,8 @@ getBean("&name")  → 要工厂
 | AutowireCapableBeanFactory | `config/AutowireCapableBeanFactory.java` | spring-beans |
 | BeanFactoryPostProcessor | `config/BeanFactoryPostProcessor.java` | spring-beans |
 | BeanPostProcessor | `config/BeanPostProcessor.java` | spring-beans |
+| Aware | `factory/Aware.java` | spring-beans |
+| ApplicationContextAwareProcessor | `context/support/ApplicationContextAwareProcessor.java` | spring-context |
 | FactoryBean | `factory/FactoryBean.java` | spring-beans |
 | ApplicationContext | `context/ApplicationContext.java` | spring-context |
 | refresh() | `support/AbstractApplicationContext.java` | spring-context |
@@ -463,6 +510,7 @@ getBean("&name")  → 要工厂
 - [[09-容器层-BeanFactory与Registry详解]]
 - [[10-Context层-ApplicationContext详解]]
 - [[14-工厂Bean-BeanFactory与FactoryBean的区别]] · [[15-工厂Bean-FactoryBean接口体系详解]]
+- [[11-扩展点层-BeanFactoryPostProcessor详解]] · [[12-扩展点层-BeanPostProcessor详解]] · [[13-生命周期层-Aware体系详解]]
 - 下篇：[[16-IoC与DI核心概念]] · [[17-Bean加载原理与源码阅读路径]]
 
 ---

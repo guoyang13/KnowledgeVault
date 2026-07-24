@@ -40,7 +40,7 @@
 
 ```text
 BeanFactory     = 厨房（管 Bean 生命周期）
-ApplicationContext = 整栋餐厅（厨房 + 环境 + 广播 + 多语言 + 启动流程）
+ApplicationContext = 餐厅经理（管厨房 + 环境 + 广播 + 多语言 + 启动流程 refresh）
 ```
 
 ---
@@ -73,15 +73,15 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 
 ## 比 BeanFactory 多了什么
 
-| 能力 | 说明 | 典型场景 |
-|------|------|---------|
-| **启动时预实例化** | `refresh()` 时创建非 lazy 单例 | 启动即发现配置错误 |
-| **Environment** | Profile、`application.properties` | `@Profile("dev")` |
-| **ResourceLoader** | 加载 `classpath:`、`file:` 资源 | 读配置文件、模板 |
-| **事件机制** | `publishEvent()` / `@EventListener` | 解耦业务通知 |
-| **国际化** | `MessageSource` | 多语言消息 |
-| **更多 Aware 回调** | `ApplicationContextAware`、`ResourceLoaderAware` 等 | Bean 感知容器环境 |
-| **AOP 自动代理** | 通过 BPP 在 refresh 流程中启用 | `@Transactional`、`@Async` |
+| 能力                 | 说明                                                | 典型场景                      |
+| ------------------ | ------------------------------------------------- | ------------------------- |
+| **启动时预实例化**        | `refresh()` 时创建非 lazy 单例                          | 启动即发现配置错误                 |
+| **Environment**    | Profile、`application.properties`                  | `@Profile("dev")`         |
+| **ResourceLoader** | 加载 `classpath:`、`file:` 资源                        | 读配置文件、模板                  |
+| **事件机制**           | `publishEvent()` / `@EventListener`               | 解耦业务通知                    |
+| **国际化**            | `MessageSource`                                   | 多语言消息                     |
+| **更多 Aware 回调**    | `ApplicationContextAware`、`ResourceLoaderAware` 等 | Bean 感知容器环境               |
+| **AOP 自动代理**       | 通过 BPP 在 refresh 流程中启用                            | `@Transactional`、`@Async` |
 
 ### 与 BeanFactory 对比
 

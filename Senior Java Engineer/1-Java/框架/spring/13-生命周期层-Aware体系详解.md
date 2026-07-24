@@ -14,7 +14,63 @@
 
 `Aware` 是 Spring 的**标记接口体系**——Bean 实现某个 `XxxAware` 子接口，声明「我需要容器里的某个基础设施对象」，容器在特定时机**回调**注入。它与 `@Autowired` 的 DI 不同：Aware 是容器推给 Bean 的框架级回调，不是业务依赖注入。
 
-> 速查版见 [[05-接口地图-IoC与DI重要接口大全#四、Aware 接口族 — 让 Bean 感知容器 ★]]；本篇是完整深入版。
+> 速查版见 [[05-接口地图-IoC与DI重要接口大全#四、Aware 接口族 — 让 Bean 感知容器 ★]] · [[100-Q&A/Aware体系总结与常见问题]]；本篇是完整深入版。
+
+---
+
+## 零、总结速查 ★
+
+> 复习用一页纸；细节见下文各章。
+
+### 核心对照
+
+| 维度 | 说明 |
+|------|------|
+| **是什么** | 空标记 `Aware` + 子接口 `setXxx()`；**实现本身不自动注入** |
+| **谁处理** | BeanFactory 级：`invokeAwareMethods()`；Context 级：`ApplicationContextAwareProcessor`（BPP） |
+| **何时** | `populateBean`（DI）**之后**，`@PostConstruct` **之前** |
+| **谁会用** | 框架 Bean（AAP、AOP、Filter…）；**业务 `@Service` 一般不用** |
+| **`instanceof Aware`** | 仅当类 `implements XxxAware` 为 true；普通 Bean 整段跳过 |
+
+### 与 DI
+
+| | `@Autowired` | `XxxAware` |
+|---|-------------|------------|
+| 注入什么 | 业务 Bean | 容器基础设施（BeanFactory、beanName、Environment…） |
+| 典型 | `OrderRepository` | `AutowiredAnnotationBeanPostProcessor.setBeanFactory()` |
+| 业务代码 | **首选** | 一般不写 |
+
+### 生命周期
+
+```text
+new → populateBean（@Autowired）→ invokeAwareMethods（BeanFactory 级 Aware）
+  → BPP BeforeInit（Context 级 Aware）→ @PostConstruct → BPP AfterInit（AOP）
+```
+
+### 两套处理器
+
+```text
+步骤 1 · invokeAwareMethods
+  BeanNameAware / BeanClassLoaderAware / BeanFactoryAware
+
+步骤 2 · ApplicationContextAwareProcessor
+  EnvironmentAware → … → ApplicationContextAware（固定顺序）
+```
+
+### 为什么需要 Aware
+
+框架 Bean 要**认识厨房本身**（BeanFactory、注册名、ClassLoader），且处理 DI 的 AAP **必须先于** DI 拿到工厂（**不能 `@Autowired BeanFactory` 自举**）→ 用 Aware 在 `initializeBean` 步骤 1 直接 `setBeanFactory`。
+
+### 记忆口诀
+
+```text
+@Autowired  = 传菜员送协作同事（业务 DI）
+Aware       = 后勤/品控按登记表通知厨房基础设施（Push 回调）
+```
+
+### 与 FactoryBean / 编译时运行时
+
+**无必然关系**。Aware 是生命周期基础设施回调；FactoryBean 是「工厂产 P」；DDD 编译时接口解耦见 [[100-Q&A/DDD分层-编译时运行时与Spring装配]]。
 
 ---
 
@@ -97,16 +153,24 @@ Aware 不是统一由一个类处理，而是分**两层**：
 
 ```java
 private void invokeAwareMethods(String beanName, Object bean) {
-    if (bean instanceof Aware) {
-        if (bean instanceof BeanNameAware)
+    if (bean instanceof Aware) {  // 仅 implements XxxAware 的 Bean 进入；普通 TestBean 为 false
+        if (bean instanceof BeanNameAware beanNameAware)
             → setBeanName(beanName)
-        if (bean instanceof BeanClassLoaderAware)
+        if (bean instanceof BeanClassLoaderAware beanClassLoaderAware)
             → setBeanClassLoader(getBeanClassLoader())
-        if (bean instanceof BeanFactoryAware)
+        if (bean instanceof BeanFactoryAware beanFactoryAware)
             → setBeanFactory(this)
     }
 }
 ```
+
+**`instanceof Aware` 含义**：Java 继承规则——实现任意 `XxxAware extends Aware` 即为 true；**不是** Spring 给所有 Bean 打标记，也**不是** `@Component` 自动带来 Aware。
+
+| 类 | `instanceof Aware` |
+|----|-------------------|
+| `TestBean`（普通 POJO） | false → 不调任何 `setXxx` |
+| `AutowiredAnnotationBeanPostProcessor` | true → `setBeanFactory` |
+| `@Component` + `implements BeanNameAware` | true → `setBeanName` |
 
 | 接口 | 回调方法 | 注入内容 | 模块 |
 |------|----------|----------|------|
@@ -344,15 +408,38 @@ public void setBeanFactory(BeanFactory beanFactory) {
 }
 ```
 
+**为何不能 `@Autowired BeanFactory`？** AAP 是执行 `@Autowired` 的 BPP；必须先于业务 Bean 的 `populateBean` 持有工厂，否则无法 `resolveDependency`（自举循环）。
+
+**`setBeanFactory` 之后做什么？** 在 `resolveFieldValue` / `resolveMethodArguments` 中：
+
+```java
+value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
+```
+
+→ `resolveDependency` 详解见 [[20-依赖注入实现原理]] · [[100-Q&A/Aware体系总结与常见问题#AAP 与 resolveDependency]]
+
+**测试用例：`autowiringIsEnabledByDefault`**（`AnnotationConfigApplicationContextTests`）
+
+```java
+ApplicationContext context = new AnnotationConfigApplicationContext(AutowiredConfig.class);
+assertThat(context.getBean(TestBean.class).name).isEqualTo("foo");
+```
+
+| Bean | 是否 Aware | 说明 |
+|------|-----------|------|
+| `TestBean` | ✗ | 普通 POJO；`invokeAwareMethods` 对其无操作 |
+| `AutowiredConfig` | ✗ | 靠 `@Autowired String autowiredName`（DI，非 Aware） |
+| `AutowiredAnnotationBeanPostProcessor` | ✓ `BeanFactoryAware` | refresh 时先 `setBeanFactory`，再帮 Config 注入 |
+
 → 详见 [[20-依赖注入实现原理]] · [[12-扩展点层-BeanPostProcessor详解]]
 
 ### 6.3 spring-aop — 代理创建
 
-| Bean | 实现的 Aware | 为什么需要 |
-|------|-------------|-----------|
-| `AbstractAutoProxyCreator` | `BeanFactoryAware` | 创建代理时要从容器找 Advisor、TargetSource |
-| `AbstractBeanFactoryAwareAdvisingPostProcessor` | `BeanFactoryAware` | 基于 BeanFactory 的自动 advisor 发现 |
-| `DefaultAdvisorAutoProxyCreator` | `BeanNameAware` | 需要知道自己的 Bean 名 |
+| Bean                                            | 实现的 Aware          | 为什么需要                           |
+| ----------------------------------------------- | ------------------ | ------------------------------- |
+| `AbstractAutoProxyCreator`                      | `BeanFactoryAware` | 创建代理时要从容器找 Advisor、TargetSource |
+| `AbstractBeanFactoryAwareAdvisingPostProcessor` | `BeanFactoryAware` | 基于 BeanFactory 的自动 advisor 发现   |
+| `DefaultAdvisorAutoProxyCreator`                | `BeanNameAware`    | 需要知道自己的 Bean 名                  |
 
 ```java
 // AbstractAutoProxyCreator
@@ -429,6 +516,29 @@ FrameworkServlet implements ApplicationContextAware
 ---
 
 ## 七、典型 Aware 接口深入
+
+### 7.0 BeanNameAware — 感知注册名
+
+```java
+public interface BeanNameAware extends Aware {
+    void setBeanName(String name);  // 容器实际注册名，内部 Bean 可能带 # 后缀
+}
+```
+
+- **处理器**：`invokeAwareMethods()`（步骤 1，不经过 BPP）
+- **时机**：`populateBean` 之后、`@PostConstruct` 之前
+- **官方态度**：一般不推荐业务 Bean 依赖 bean 名（脆弱、耦合 Spring API）
+
+**Spring 中的真实用法（非业务 Service）：**
+
+| 类 | 用途 |
+|----|------|
+| `GenericFilterBean` | 无 `FilterConfig` 时用 bean 名作 `getFilterName()` 兜底 |
+| `DefaultAdvisorAutoProxyCreator` | `setBeanName` → 默认 Advisor 前缀 `beanName + "."` |
+| `PlaceholderConfigurerSupport` | 解析 `${}` 时跳过对自身 BeanDefinition 的解析 |
+| `AbstractMessageChannel` | 日志标识 channel |
+
+业务代码需要标识符 → 自定义业务 id 字段；**不要**绑 bean 名。
 
 ### 7.1 BeanFactoryAware — 感知 BeanFactory
 
@@ -567,10 +677,14 @@ public class MyService implements TraceIdAware {
 | 误区 | 正解 |
 |------|------|
 | 实现 `Aware` 就自动注入 | 必须有对应 BPP 或 `invokeAwareMethods()` 处理 |
+| 所有 Bean 都是 Aware | 只有 `implements XxxAware` 的才是；`TestBean` 等普通 Bean 为 false |
+| `@Component` 就会 `instanceof Aware` | 与注解无关，只看类声明 |
 | `@PostConstruct` 在 Aware 之前 | Aware → BPP BeforeInit → `@PostConstruct` |
-| `ApplicationContextAware` 和 `@Autowired ApplicationContext` 完全不同 | 效果类似；`@Autowired` 走 DI，Aware 走回调 |
+| `ApplicationContextAware` 和 `@Autowired ApplicationContext` 完全不同 | 效果类似；`@Autowired` 走 DI，Aware 走回调；业务优先前者 |
+| AAP 可以用 `@Autowired BeanFactory` | 不行；自举问题，必须 `BeanFactoryAware.setBeanFactory` |
 | 所有 Aware 都由 `invokeAwareMethods()` 处理 | 只有 BeanFactory 级 3 个；其余走 BPP |
 | Aware 适合注入业务依赖 | 只适合容器基础设施；业务依赖用构造器注入 |
+| Aware = 增强 Bean / FactoryBean 的抽象 | 无关；Aware 是基础设施 Push 回调 |
 | 实现多个 Aware 接口顺序任意 | ApplicationContext 级有固定顺序（Environment 最先，Context 最后） |
 
 ---

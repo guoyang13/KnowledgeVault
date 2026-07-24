@@ -66,6 +66,11 @@
 | 编号 | 笔记 | 内容 |
 |:----:|------|------|
 | — | [[100-Q&A/未被使用的类Spring如何处理]] | 未注册 / 孤儿 Bean 行为 |
+| — | [[100-Q&A/Spring依赖注入形式分类与Demo]] | DI 形式分类 + Demo |
+| — | [[100-Q&A/Spring注入注解与byType-byName解析逻辑]] | 注解解析 + byName/byType |
+| — | [[100-Q&A/动态代理是什么]] | JDK / CGLIB 与 Spring 对应 |
+| — | [[100-Q&A/DDD分层-编译时运行时与Spring装配]] | 编译时解耦 vs 运行时装配 + FactoryBean 边界 |
+| — | [[100-Q&A/Aware体系总结与常见问题]] | Aware 总结、BeanNameAware、AAP、resolveDependency |
 
 ---
 
@@ -117,6 +122,7 @@
 | BeanDefinition | [[06-元数据层-BeanDefinition三兄弟详解]] |
 | BFPP / BPP / Aware | [[11-扩展点层-BeanFactoryPostProcessor详解]] · [[12-扩展点层-BeanPostProcessor详解]] · [[13-生命周期层-Aware体系详解]] |
 | 孤儿 Bean / 未扫描类 | [[100-Q&A/未被使用的类Spring如何处理]] |
+| DI 形式 / 注解解析 | [[100-Q&A/Spring依赖注入形式分类与Demo]] · [[100-Q&A/Spring注入注解与byType-byName解析逻辑]] |
 
 ---
 

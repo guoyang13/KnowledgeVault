@@ -4,18 +4,35 @@
 >
 > 前置：[[12-扩展点层-BeanPostProcessor详解]] · [[13-生命周期层-Aware体系详解]] · 上篇 [[06-元数据层-BeanDefinition三兄弟详解]]
 >
-> 关联：[[01-注解入门-配置类与组件类]] · [[18-refresh方法详解]] · [[25-源码调试与断点指南]]
+> 关联：[[21-循环依赖与三级缓存详解]] · [[01-注解入门-配置类与组件类]] · [[18-refresh方法详解]] · [[25-源码调试与断点指南]]
 >
 > 本地源码：`/Users/guoyang/IdeaProjects/spring/spring-framework`
 > - `spring-aop/.../autoproxy/AbstractAutoProxyCreator.java`
 > - `spring-aop/.../DefaultAopProxyFactory.java`
-> - `spring-context/.../ConfigurationClassEnhancer.java`
+> - `spring-beans/.../AbstractAutowireCapableBeanFactory.java`（`initializeBean` / `doCreateBean`）
+
+---
+
+## 文档结构
+
+| 章节 | 内容 |
+|:----:|------|
+| [[#一、代理对象生成方式总览]] | AOP vs Configuration vs Scoped |
+| [[#四、AutoProxyCreator 类继承体系]] | BPP 三个回调 |
+| [[#五、创建代理的前提条件]] | wrapIfNecessary 决策 |
+| [[#六、代理在 doCreateBean 中的时机与替换]] | initializeBean、raw→proxy、循环依赖 |
+| [[#七、buildProxy 详解]] | JDK/CGLIB 七步决策 |
+| [[#八、一个接口多个实现]] | 独立判断 |
+| [[#九、JDK vs CGLIB 速查]] | DefaultAopProxyFactory |
+| [[#十、源码行号 · 断点 · 误区]] | 附录 |
 
 ---
 
 ## 一句话
 
 Spring **不会**给所有 Bean 都创建代理。只有 `AbstractAutoProxyCreator` 判定「有匹配的 Advisor」时，才会在 BPP 链里把原始对象包装成 **JDK 动态代理** 或 **CGLIB 代理**；`@Configuration` 的 CGLIB 增强是另一套机制，与 AOP 无关。
+
+> 动态代理基础概念 → [[100-Q&A/动态代理是什么]] · FactoryBean 与 BPP 两条「变样」路线 → [[15-工厂Bean-FactoryBean接口体系详解#FactoryBean 抽象的是什么？（不是「增强 Bean」的抽象）]]
 
 ---
 
@@ -210,90 +227,266 @@ Advisor 要能 **apply 到该 Bean**（`AopUtils.findAdvisorsThatCanApply`）：
 
 ---
 
-## 六、代理在 `doCreateBean` 中的三个时机
+## 六、代理在 doCreateBean 中的时机与替换
 
-| 时机 | 回调 | 典型场景 |
+### 6.1 三个创建时机
+
+| 时机           | 回调                                                       | 典型场景                                                |
+| ------------ | -------------------------------------------------------- | --------------------------------------------------- |
+| **实例化之前**    | `postProcessBeforeInstantiation()`                       | 仅 **自定义 TargetSource**；**不是**普通 `@Transactional` 路径 |
+| **初始化之后**    | `postProcessAfterInitialization()` → `wrapIfNecessary()` | **绝大多数** AOP（`@Transactional`、`@Cacheable`、切面）      |
+| **循环依赖早期引用** | `getEarlyBeanReference()` → `wrapIfNecessary()`          | A↔B 循环且 A 需要被代理                                     |
+
+### 6.2 两个变量：`bean` vs `exposedObject`
+
+在 `doCreateBean` 中必须区分：
+
+| 变量 | 含义 | 生命周期 |
 |------|------|----------|
-| **实例化之前** | `postProcessBeforeInstantiation()` | 仅 **自定义 TargetSource**（如 LazyInitTargetSource）；**不是**普通 `@Transactional` 路径 |
-| **初始化之后** | `postProcessAfterInitialization()` → `wrapIfNecessary()` | **绝大多数** AOP（`@Transactional`、`@Cacheable`、切面） |
-| **循环依赖早期引用** | `getEarlyBeanReference()` → `wrapIfNecessary()` | A、B 循环依赖且 A 需要被代理 |
+| `bean` | `createBeanInstance` 的 **原始对象（raw）** | 始终不变，作为代理的 **target** |
+| `exposedObject` | **对外暴露的对象** | 可能是 raw，也可能被换成 proxy |
 
-### 两条路径总览
+```java
+// AbstractAutowireCapableBeanFactory.doCreateBean() L616–622
+Object exposedObject = bean;
+populateBean(beanName, mbd, instanceWrapper);
+exposedObject = initializeBean(beanName, exposedObject, mbd);  // ★ 可能变成 proxy
+return exposedObject;  // → addSingleton 写入一级缓存
+```
+
+> Spring **不是**把一级缓存里的 raw 原地改成 proxy，而是 **返回新引用**；raw 藏在 `SingletonTargetSource.target` 里。
+
+```text
+┌─────────────┐
+│  proxy A    │  ← getBean 返回、一级缓存
+│  ┌───────┐  │
+│  │ raw A │  │  ← SingletonTargetSource.target
+│  └───────┘  │
+└─────────────┘
+```
+
+### 6.3 `initializeBean` 四步顺序
+
+**位置：** `AbstractAutowireCapableBeanFactory.initializeBean()` **L1829–1852**
+
+```text
+initializeBean(beanName, rawBean, mbd)
+  ① invokeAwareMethods()                          BeanNameAware / BeanFactoryAware
+  ② applyBeanPostProcessorsBeforeInitialization() @PostConstruct / ApplicationContextAware
+  ③ invokeInitMethods()                           afterPropertiesSet + init-method
+  ④ applyBeanPostProcessorsAfterInitialization()  ★ AbstractAutoProxyCreator → proxy
+  return wrappedBean → doCreateBean.exposedObject
+```
+
+**结论：** `@PostConstruct` / `InitializingBean` 在 **raw 对象**上执行；AOP 代理在步骤 ④ 才创建。
+
+### 6.4 场景 A：无循环依赖（常规替换）
+
+```text
+createBeanInstance()     → bean = raw A
+addSingletonFactory()    → 三级（factory 通常不执行）
+populateBean(raw A)
+initializeBean(raw A)
+  ④ postProcessAfterInitialization
+       earlyBeanReferences.remove → null
+       wrapIfNecessary(raw A) → proxy A
+exposedObject = proxy A
+earlySingletonReference = null → 跳过一致性校验
+addSingleton("a", proxy A)   → 一级存 proxy
+```
+
+### 6.5 场景 B：循环依赖 + AOP
+
+```text
+createBeanInstance()     → bean = raw A
+addSingletonFactory()    → 三级 factory
+
+B populateBean → getBean(A)
+  getEarlyBeanReference(raw A)
+    earlyBeanReferences.put(cacheKey, raw A)
+    wrapIfNecessary(raw A) → earlyProxy A
+  → 二级缓存 = earlyProxy，B.a = earlyProxy
+
+A 继续 initializeBean(raw A)
+  ④ postProcessAfterInitialization(raw A)
+       earlyBeanReferences.remove(cacheKey) == raw A  → 跳过 wrap，返回 raw
+exposedObject = raw A（暂时）
+
+doCreateBean 步骤 4 一致性替换（L633–637）：
+  earlySingletonReference = getSingleton("a", false)  → earlyProxy
+  if (exposedObject == bean)  → exposedObject = earlyProxy A
+
+addSingleton("a", earlyProxy A)  → 与 B 注入的是同一个 proxy
+```
+
+### 6.6 `earlyBeanReferences` 防重复代理
+
+**位置：** `AbstractAutoProxyCreator.postProcessAfterInitialization()` **L326–339**
+
+```java
+if (this.earlyBeanReferences.remove(cacheKey) != bean) {
+    return wrapIfNecessary(bean, beanName, cacheKey);  // 常规：创建 proxy
+}
+return bean;  // 已 early wrap → 返回 raw，交给 doCreateBean 步骤 4 替换
+```
+
+| 场景 | `remove` 返回值 | 步骤 ④ 行为 | 最终 `exposedObject` |
+|------|----------------|------------|---------------------|
+| 无循环 | `null` | `wrapIfNecessary` → proxy | proxy |
+| 循环 + AOP | `raw A`（== bean） | 返回 raw | 步骤 4 换成 earlyProxy |
+| 循环无 AOP | `raw A` | 返回 raw | raw（无 proxy） |
+
+### 6.7 不一致时报错
+
+若早期注入 **raw A**，但步骤 ④ 又 wrap 成 **不同 proxy**：
+
+```text
+doCreateBean L639–655 → BeanCurrentlyInCreationException
+"B has been injected in its raw version ... but has eventually been wrapped"
+```
+
+→ 详见 [[21-循环依赖与三级缓存详解#七、AOP + 循环依赖]]
+
+### 6.8 销毁注册用 raw
+
+```java
+registerDisposableBeanIfNecessary(beanName, bean, mbd);  // bean = raw，不是 proxy
+```
+
+`@PreDestroy` / `DisposableBean.destroy()` 在 **原始对象**上执行。
+
+### 6.9 两条路径总览
 
 ```mermaid
 flowchart TD
     A[createBean] --> B[实例化 + populateBean]
     B --> C{循环依赖?}
-    C -->|是| D[addSingletonFactory 三级缓存]
-    D --> E[getEarlyBeanReference]
-    E --> F[wrapIfNecessary → 提前建代理]
+    C -->|是| D[addSingletonFactory]
+    D --> E[getEarlyBeanReference → earlyProxy → 二级]
     C -->|否| G[initializeBean]
-    G --> H[Aware / @PostConstruct / init-method]
+    E --> G
+    G --> H[Aware / @PostConstruct / init]
     H --> I[postProcessAfterInitialization]
-    I --> J{earlyBeanReferences 去重}
-    J -->|未提前代理| K[wrapIfNecessary]
-    J -->|已在三级缓存代理过| L[直接返回]
-    K --> M[createProxy → JDK/CGLIB]
-    F --> M
+    I --> J{earlyBeanReferences?}
+    J -->|无| K[wrapIfNecessary → proxy]
+    J -->|有| L[返回 raw]
+    K --> M[exposedObject = proxy]
+    L --> N[exposedObject = earlyProxy]
+    M --> O[addSingleton 一级]
+    N --> O
 ```
 
-### 与 `AbstractAutowireCapableBeanFactory` 的源码衔接
+### 6.10 与源码衔接
 
-**常规路径** — `initializeBean()` 末尾：
+**常规路径：**
 
 ```text
-AbstractAutowireCapableBeanFactory.initializeBean()
-  → applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName)
-       → AbstractAutoProxyCreator.postProcessAfterInitialization()
-            → wrapIfNecessary()
-                 → createProxy()
+doCreateBean → initializeBean → applyBeanPostProcessorsAfterInitialization
+  → AbstractAutoProxyCreator.postProcessAfterInitialization()
+       → wrapIfNecessary() → createProxy() → buildProxy()
 ```
 
-**循环依赖路径** — 三级缓存 `ObjectFactory` 回调：
+**循环依赖路径：**
 
 ```text
-AbstractAutowireCapableBeanFactory.getEarlyBeanReference()
-  → SmartInstantiationAwareBPP.getEarlyBeanReference()
-       → AbstractAutoProxyCreator.getEarlyBeanReference()
-            → earlyBeanReferences.put(cacheKey, bean)   // 记录 raw bean
-            → wrapIfNecessary()                        // 可能提前返回 proxy
+getEarlyBeanReference() → getEarlyBeanReference(bean, beanName)
+  → earlyBeanReferences.put + wrapIfNecessary() → earlyProxy
 ```
-
-### `initializeBean()` 内的顺序（与 `@PostConstruct` 的关系）
-
-```text
-initializeBean()
-├─ invokeAwareMethods()
-├─ postProcessBeforeInitialization()     ← @PostConstruct 在这里（原始对象上执行）
-├─ invokeInitMethods()                   ← InitializingBean / init-method
-└─ postProcessAfterInitialization()      ← ★ AOP 代理在这里创建
-```
-
-**结论：** `@PostConstruct` 跑在代理创建**之前**，回调里的 `this` 是原始 Bean，不是代理。
-
-### `earlyBeanReferences` 防重复代理
-
-`postProcessAfterInitialization()` 中的去重逻辑：
-
-```text
-cacheKey = getCacheKey(bean.getClass(), beanName)
-  // FactoryBean 用 "&beanName"，普通 Bean 用 beanName，无名称时用 Class
-
-if (earlyBeanReferences.remove(cacheKey) != bean) {
-    return wrapIfNecessary(bean, beanName, cacheKey);   // 未提前处理 → 常规 wrap
-}
-return bean;   // remove 返回值 == bean → 已在 getEarlyBeanReference 中代理过
-```
-
-| 场景 | `earlyBeanReferences.remove()` 返回值 | 行为 |
-|------|--------------------------------------|------|
-| 无循环依赖 | `null`（map 无此 key） | 走 `wrapIfNecessary()` |
-| 循环依赖 + 已提前代理 | `rawBean`（== 当前 bean） | 直接返回，不重复代理 |
-| 循环依赖 + 未匹配 Advisor | `rawBean` | 直接返回原 Bean |
 
 ---
 
-## 七、一个接口多个实现 / 多个子类
+## 七、buildProxy 详解（JDK/CGLIB 决策核心）
+
+### 7.1 调用链
+
+```text
+wrapIfNecessary / getEarlyBeanReference
+  → createProxy()
+      → buildProxy()                         ← 本方法 L511
+          → ProxyFactory.getProxy(classLoader)
+              → DefaultAopProxyFactory.createAopProxy()
+                  → JdkDynamicAopProxy       （基于接口）
+                  → ObjenesisCglibAopProxy   （基于子类）
+```
+
+### 7.2 七步流程
+
+**位置：** `AbstractAutoProxyCreator.buildProxy()` **L511–556**
+
+| 步骤 | 代码 | 作用 |
+|:----:|------|------|
+| ① | `AutoProxyUtils.exposeTargetClass()` | 将 targetClass 写入 BeanDefinition 属性 |
+| ② | `new ProxyFactory()` + `copyFrom(this)` | 复制 AutoProxyCreator 配置 |
+| ③ | JDK vs CGLIB 决策 | 见 [[#7.3 JDK vs CGLIB 决策树]] |
+| ④ | `buildAdvisors()` + `addAdvisors()` | 组装拦截器链（specific + common） |
+| ⑤ | `setTargetSource(targetSource)` | raw Bean 作为方法调用 target |
+| ⑥ | `customizeProxyFactory()` + `setFrozen` + `setPreFiltered` | 子类扩展 / 优化 |
+| ⑦ | `getProxy(classLoader)` | 实例化代理（`classOnly=true` 时只返回 Class） |
+
+### 7.3 JDK vs CGLIB 决策树
+
+```text
+buildProxy 步骤 ③
+│
+├─ proxyFactory.isProxyTargetClass() == true（已强制 CGLIB）
+│     ├─ 目标是 JDK Proxy / Lambda → addInterface → JDK
+│     └─ 否则 → CGLIB
+│
+└─ 未强制
+      ├─ shouldProxyTargetClass()（preserveTargetClass）→ CGLIB
+      └─ evaluateProxyInterfaces()
+            ├─ 有合理业务接口 → addInterface → JDK
+            └─ 无（仅 Aware/InitializingBean 等）→ setProxyTargetClass(true) → CGLIB
+```
+
+**`evaluateProxyInterfaces`**（`ProxyProcessorSupport` L104）排除：
+- 容器回调接口（`InitializingBean`、`Aware` 等）
+- CGLIB 内部接口（`*.cglib.proxy.Factory`）
+
+### 7.4 TargetSource 与 raw 对象
+
+```java
+// wrapIfNecessary L406–407
+createProxy(beanClass, beanName, specificInterceptors,
+    new SingletonTargetSource(bean));  // raw 作为 target
+```
+
+方法调用链：`proxy.method()` → 拦截器链 → `SingletonTargetSource.getTarget()` → **raw bean**
+
+### 7.5 第三层：`DefaultAopProxyFactory.createAopProxy()`
+
+```text
+if (optimize || proxyTargetClass || !hasUserSuppliedInterfaces) {
+    if (targetClass 是 interface / JDK Proxy / Lambda)
+        → JdkDynamicAopProxy
+    else
+        → ObjenesisCglibAopProxy
+}
+else {
+    → JdkDynamicAopProxy
+}
+```
+
+### 7.6 决策对照表
+
+| 条件 | 代理类型 |
+|------|----------|
+| 有业务接口 + 未 `proxyTargetClass` | **JDK** |
+| 无业务接口 / 仅容器回调接口 | **CGLIB** |
+| `@EnableAspectJAutoProxy(proxyTargetClass = true)` | **CGLIB** |
+| 目标本身是 interface / Lambda | **JDK**（即使强制类代理） |
+| 无匹配 Advisor | **普通对象**（不进入 buildProxy） |
+
+### 7.7 全局配置入口
+
+```java
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)
+```
+
+---
+
+## 八、一个接口多个实现 / 多个子类
 
 Spring **按每个具体 Bean 独立判断**，不会给「接口」或「继承体系」统一加代理。
 
@@ -323,9 +516,9 @@ class OrderServiceMock implements OrderService {
 
 ---
 
-## 八、JDK 代理 vs CGLIB：生成方式与决策
+## 九、JDK 代理 vs CGLIB：生成方式
 
-### 8.1 两种代理如何「生成对象」
+### 9.1 两种代理如何「生成对象」
 
 **JDK 动态代理** — `JdkDynamicAopProxy.getProxy()`：
 
@@ -350,7 +543,7 @@ return enhancer.create();              // UserService$$SpringCGLIB$$0
 - 代理类是目标类的**子类**
 - 可代理无接口的类；**不能**代理 final 类/方法
 
-### 8.2 方法调用链（以 @Transactional 为例）
+### 9.2 方法调用链（以 @Transactional 为例）
 
 ```text
 client.getBean("orderService")  →  代理对象
@@ -363,75 +556,83 @@ proxy.create()
 
 无匹配 Advisor 时，**直接反射调用 target**，不建拦截链。
 
-### 8.3 三层决策
+### 9.3 三层决策总览
 
 ```text
-① wrapIfNecessary()              普通对象 vs 需要代理
-        ↓ 需要代理
-② buildProxy()                   配置 ProxyFactory（接口 / proxyTargetClass）
-        ↓
-③ DefaultAopProxyFactory         JdkDynamicAopProxy vs ObjenesisCglibAopProxy
+① wrapIfNecessary()              要不要代理
+② buildProxy()                   JDK vs CGLIB（见 [[#七、buildProxy 详解]]）
+③ DefaultAopProxyFactory         实例化 JdkDynamicAopProxy / CglibAopProxy
 ```
 
-### 8.4 第二层：`buildProxy()` 配置 ProxyFactory
-
-**位置：** `AbstractAutoProxyCreator.buildProxy()`
-
-```text
-if (proxyFactory.isProxyTargetClass()) {
-    // 已强制类代理（@EnableAspectJAutoProxy(proxyTargetClass=true) 等）
-}
-else if (shouldProxyTargetClass(beanClass, beanName)) {
-    proxyFactory.setProxyTargetClass(true);      // BeanDefinition 上 preserveTargetClass
-}
-else {
-    evaluateProxyInterfaces(beanClass, proxyFactory);
-}
-```
-
-**`evaluateProxyInterfaces()`**（`ProxyProcessorSupport`）：
-
-- 扫描 Bean 实现的接口
-- 排除容器回调接口（`InitializingBean`、`Aware` 等）和 CGLIB 内部接口
-- **有合理业务接口** → `addInterface()` → 走 JDK 路线
-- **无合理接口** → `setProxyTargetClass(true)` → 走 CGLIB 路线
-
-### 8.5 第三层：`DefaultAopProxyFactory.createAopProxy()`
-
-**最终分叉点：**
-
-```text
-if (optimize || proxyTargetClass || !hasUserSuppliedInterfaces) {
-    if (targetClass 是 interface / JDK Proxy / Lambda)
-        → JdkDynamicAopProxy
-    else
-        → ObjenesisCglibAopProxy
-}
-else {
-    → JdkDynamicAopProxy   // 有用户 supplied 接口且未强制类代理
-}
-```
-
-### 8.6 决策对照表
-
-| 条件 | 代理类型 |
-|------|----------|
-| 有业务接口 + 未 `proxyTargetClass` | **JDK** |
-| 无业务接口 / 仅容器回调接口 | **CGLIB** |
-| `@EnableAspectJAutoProxy(proxyTargetClass = true)` | **CGLIB**（目标是具体类时） |
-| 目标本身是 interface / Lambda | **JDK**（即使强制类代理） |
-| 无匹配 Advisor | **普通对象**（不进入本层） |
-
-### 8.7 全局配置入口
-
-```java
-@EnableAspectJAutoProxy(proxyTargetClass = true)  // → AopConfigUtils.forceAutoProxyCreatorToUseClassProxying()
-@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)    // → BeanDefinition PRESERVE_TARGET_CLASS_ATTRIBUTE
-```
+> buildProxy 详细七步已移至 [[#七、buildProxy 详解]]，此处不再重复。
 
 ---
 
-## 九、运行时如何判断
+## 十、源码行号 · 断点 · 误区
+
+### 10.1 源码行号地图
+
+| 步骤 | 类 | 行号 |
+|------|-----|------|
+| `doCreateBean` 调用 initializeBean | `AbstractAutowireCapableBeanFactory` | L620–622 |
+| `initializeBean` 四步 | `AbstractAutowireCapableBeanFactory` | L1829–1852 |
+| 早期 vs 最终一致性替换 | `AbstractAutowireCapableBeanFactory.doCreateBean` | L631–657 |
+| `getEarlyBeanReference` | `AbstractAutowireCapableBeanFactory` | L991–1000 |
+| `wrapIfNecessary` | `AbstractAutoProxyCreator` | L384–415 |
+| `getEarlyBeanReference` | `AbstractAutoProxyCreator` | L265–268 |
+| `postProcessAfterInitialization` | `AbstractAutoProxyCreator` | L326–339 |
+| **`buildProxy`** | `AbstractAutoProxyCreator` | **L511–556** |
+| `createProxy` | `AbstractAutoProxyCreator` | L499–503 |
+| `evaluateProxyInterfaces` | `ProxyProcessorSupport` | L104–123 |
+| `DefaultAopProxyFactory` | `DefaultAopProxyFactory` | `createAopProxy()` |
+
+### 10.2 调试断点
+
+| 顺序 | 类 · 方法 | 看什么 |
+|:----:|-----------|--------|
+| 1 | `wrapIfNecessary()` | 要不要代理 |
+| 2 | `getAdvicesAndAdvisorsForBean()` | Advisor 是否为空 |
+| 3 | `initializeBean` **L1849** | 进入 AfterInit |
+| 4 | `postProcessAfterInitialization` | earlyBeanReferences 去重 |
+| 5 | **`buildProxy()` L511** | JDK/CGLIB 决策 + Advisor 组装 |
+| 6 | `DefaultAopProxyFactory.createAopProxy()` | 最终代理类型 |
+| 7 | `doCreateBean` **L633–637** | exposedObject 替换为 earlyProxy |
+
+配合 [[25-源码调试与断点指南]]、[[21-循环依赖与三级缓存详解#十一、调试断点]]。
+
+### 10.3 常见误区速查
+
+| 误区 | 正解 |
+|------|------|
+| 所有 `@Service` 都有代理 | 只有 Advisor 匹配才有 |
+| `@Configuration` 一定有 AOP 代理 | 可能是 ConfigurationClassEnhancer CGLIB |
+| `@Slf4j` / `@PostConstruct` 会触发代理 | 不会 |
+| 一级缓存存 raw 再改成 proxy | **返回新引用**；raw 在 TargetSource 里 |
+| 循环+AOP 会创建两个不同 proxy | earlyProxy 与一级缓存是**同一个** |
+| `@PostConstruct` 里 `this` 是 proxy | 是 **raw**；代理在 AfterInit 才创建 |
+| `@Transactional` 在 beforeInstantiation 建代理 | 常规在 **postProcessAfterInitialization** |
+| 销毁回调在 proxy 上执行 | 在 **raw bean** 上（`registerDisposableBeanIfNecessary(bean)`） |
+
+### 10.4 与 BPP 专题的关系
+
+AOP 代理是 BPP 链典型案例：`AbstractAutoProxyCreator` 在 AfterInit 把对外引用 **替换** 为 proxy。
+
+→ [[12-扩展点层-BeanPostProcessor详解]]
+
+### 10.5 后续阅读路径
+
+| 顺序 | 类 / 模块 | 看什么 |
+|:----:|-----------|--------|
+| 1 | `AbstractAdvisorAutoProxyCreator` | Advisor 收集与匹配 |
+| 2 | `DefaultAopProxyFactory` / `JdkDynamicAopProxy` | 方法拦截 |
+| 3 | `AspectJAdvisorFactory` | `@Aspect` → Advisor |
+| 4 | `ReflectiveMethodInvocation` | 拦截器链执行 |
+| 5 | [[21-循环依赖与三级缓存详解]] | earlyProxy 与三级缓存 |
+| 6 | [[23-Spring事务实现详解]] | TransactionInterceptor |
+
+---
+
+## 十一、运行时如何判断
 
 ```java
 AopUtils.isAopProxy(bean);           // 是否 AOP 代理
@@ -442,62 +643,6 @@ bean.getClass().getName();           // CGLIB 类名常含 $$SpringCGLIB$$
 // 配置类增强（非 AOP）
 EnhancedConfiguration.class.isAssignableFrom(bean.getClass());
 ```
-
----
-
-## 十、源码调试断点推荐
-
-| 顺序 | 类 · 方法 | 看什么 |
-|:----:|-----------|--------|
-| 1 | `AbstractAutoProxyCreator.wrapIfNecessary()` | 要不要代理 |
-| 2 | `AbstractAdvisorAutoProxyCreator.getAdvicesAndAdvisorsForBean()` | Advisor 是否为空 |
-| 3 | `AopUtils.findAdvisorsThatCanApply()` | 切点是否匹配 |
-| 4 | `ProxyProcessorSupport.evaluateProxyInterfaces()` | 接口 vs CGLIB 倾向 |
-| 5 | `DefaultAopProxyFactory.createAopProxy()` | JDK / CGLIB 最终分叉 |
-
-配合 [[25-源码调试与断点指南]]、[[12-扩展点层-BeanPostProcessor详解#AbstractAutoProxyCreator 参与的回调]] 跟栈。
-
----
-
-## 十一、常见误区速查
-
-| 误区 | 正解 |
-|------|------|
-| 所有 `@Service` 都有代理 | 只有 Advisor 匹配才有 |
-| `@Configuration` 一定有 AOP 代理 | 可能是 **ConfigurationClassEnhancer** 的 CGLIB，与 AOP 无关 |
-| `@Slf4j` / `@PostConstruct` 会触发代理 | 不会；前者 Lombok 编译期，后者 BPP 反射回调 |
-| 一个接口多个实现会一起代理 | 每个实现 Bean **独立**判断 |
-| AOP 代理在 `@PostConstruct` 之前可用 | `@PostConstruct` 在代理创建**之前**，`this` 是原始对象 |
-| `@Transactional` 在 `postProcessBeforeInstantiation` 建代理 | 常规路径在 **`postProcessAfterInitialization`** |
-
----
-
-## 十二、与 BPP 专题的关系
-
-AOP 代理是 BPP 链的典型案例：`AbstractAutoProxyCreator` 实现 `SmartInstantiationAwareBeanPostProcessor`，在 AfterInit 把原始 Bean **替换**为代理对象。
-
-→ 完整 BPP 介入点、注册顺序、非 static `@Bean` 导致无法 auto-proxying 的 warn，见 [[12-扩展点层-BeanPostProcessor详解]]。
-
----
-
-## 十三、后续阅读路径
-
-按调用链由外到内：
-
-| 顺序 | 类 / 模块 | 看什么 |
-|:----:|-----------|--------|
-| 1 | `AbstractAdvisorAutoProxyCreator` | Advisor 如何收集与匹配 |
-| 2 | `DefaultAopProxyFactory` / `JdkDynamicAopProxy` | 代理对象如何拦截方法 |
-| 3 | `AspectJAdvisorFactory` | `@Around` / `@Before` 如何变成 `Advisor` |
-| 4 | `ReflectiveMethodInvocation` | 拦截器链如何依次执行 |
-
-本地源码路径：
-
-| 模块 | 核心类 |
-|------|--------|
-| `spring-aop` | `AbstractAutoProxyCreator`、`DefaultAopProxyFactory`、`JdkDynamicAopProxy` |
-| `spring-beans` | `AbstractAutowireCapableBeanFactory.initializeBean()`、`getEarlyBeanReference()` |
-| `spring-context` | `AspectJAutoProxyRegistrar`、`EnableAspectJAutoProxy` |
 
 ---
 
@@ -518,4 +663,6 @@ AOP 代理是 BPP 链的典型案例：`AbstractAutoProxyCreator` 实现 `SmartI
 - [[12-扩展点层-BeanPostProcessor详解]]
 - [[18-refresh方法详解]]
 - [[25-源码调试与断点指南]]
+- [[21-循环依赖与三级缓存详解]]
 - [[23-Spring事务实现详解]]
+- [[100-Q&A/Spring依赖注入形式分类与Demo]]

@@ -16,6 +16,7 @@
 | --------------- | --------------------------------------------- | ------------------------- |
 | **BeanFactory** | IoC **容器接口**，管理所有 Bean 的定义和生命周期               | 整个**厨房**                  |
 | **FactoryBean** | 注册在容器里的**一种特殊 Bean**，本身不是最终产品，而是**生产其他对象的工厂** | 厨房里的**面点师**（做包子的人，不是包子本身） |
+|                 |                                               |                           |
 
 ```text
 BeanFactory（容器）
@@ -91,6 +92,8 @@ String FACTORY_BEAN_PREFIX = "&";
 ---
 
 ## 典型使用场景
+
+> 为什么 AOP、Mapper、JNDI 都注册 **F 而不是 P**？见 [[15-工厂Bean-FactoryBean接口体系详解#为什么 AOP、Mapper、JNDI 都注册 F（而不是 P）？]] · FactoryBean 是否「增强抽象」？见 [[15-工厂Bean-FactoryBean接口体系详解#FactoryBean 抽象的是什么？（不是「增强 Bean」的抽象）]]
 
 ### 1. AOP 代理 — ProxyFactoryBean
 

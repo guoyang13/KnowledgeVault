@@ -175,12 +175,12 @@ public interface BeanPostProcessor {
 
 ### 2.4 BeanPostProcessor 重要子接口
 
-| 子接口 | 额外能力 |
-|--------|---------|
-| `InstantiationAwareBeanPostProcessor` | 实例化**前**干预（`postProcessBeforeInstantiation`）、属性注入前后 |
-| `SmartInstantiationAwareBeanPostProcessor` | 预测 Bean 类型、循环依赖早期引用 |
-| `MergedBeanDefinitionPostProcessor` | 合并 Definition 后缓存类型信息 |
-| `DestructionAwareBeanPostProcessor` | 销毁前回调 |
+| 子接口                                        | 额外能力                                                |
+| ------------------------------------------ | --------------------------------------------------- |
+| `InstantiationAwareBeanPostProcessor`      | 实例化**前**干预（`postProcessBeforeInstantiation`）、属性注入前后 |
+| `SmartInstantiationAwareBeanPostProcessor` | 预测 Bean 类型、循环依赖早期引用                                 |
+| `MergedBeanDefinitionPostProcessor`        | 合并 Definition 后缓存类型信息                               |
+| `DestructionAwareBeanPostProcessor`        | 销毁前回调                                               |
 
 `InstantiationAwareBeanPostProcessor` 是理解**循环依赖三级缓存**的关键扩展点之一。
 
@@ -206,17 +206,17 @@ BeanFactory 定义的标准生命周期（[[09-容器层-BeanFactory与Registry�
 public interface Aware { }  // 标记接口，无方法
 ```
 
-| 接口 | 注入什么 | 生效环境 |
-|------|---------|---------|
-| `BeanNameAware` | Bean 名称 | BeanFactory |
-| `BeanClassLoaderAware` | ClassLoader | BeanFactory |
-| `BeanFactoryAware` | BeanFactory 本身 | BeanFactory |
-| `ApplicationContextAware` | ApplicationContext | ApplicationContext |
-| `EnvironmentAware` | Environment（Profile、配置） | ApplicationContext |
-| `ResourceLoaderAware` | 资源加载器 | ApplicationContext |
-| `MessageSourceAware` | 国际化 MessageSource | ApplicationContext |
-| `ApplicationEventPublisherAware` | 事件发布器 | ApplicationContext |
-| `EmbeddedValueResolverAware` | `${...}` 解析器 | ApplicationContext |
+| 接口                               | 注入什么                    | 生效环境               |
+| -------------------------------- | ----------------------- | ------------------ |
+| `BeanNameAware`                  | Bean 名称                 | BeanFactory        |
+| `BeanClassLoaderAware`           | ClassLoader             | BeanFactory        |
+| `BeanFactoryAware`               | BeanFactory 本身          | BeanFactory        |
+| `ApplicationContextAware`        | ApplicationContext      | ApplicationContext |
+| `EnvironmentAware`               | Environment（Profile、配置） | ApplicationContext |
+| `ResourceLoaderAware`            | 资源加载器                   | ApplicationContext |
+| `MessageSourceAware`             | 国际化 MessageSource       | ApplicationContext |
+| `ApplicationEventPublisherAware` | 事件发布器                   | ApplicationContext |
+| `EmbeddedValueResolverAware`     | `${...}` 解析器            | ApplicationContext |
 
 **设计建议**：Aware 是「拉式」获取容器资源；日常更推荐**构造器注入**（「推式」DI）。
 
