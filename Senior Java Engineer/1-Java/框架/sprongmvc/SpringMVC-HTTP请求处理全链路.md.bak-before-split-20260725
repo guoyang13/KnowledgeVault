@@ -1,0 +1,1336 @@
+---
+title: Spring MVC HTTP 请求处理全链路
+aliases:
+  - SpringMVC 请求处理流程
+  - Spring MVC 源码调用链
+tags:
+  - Java
+  - Spring
+  - SpringMVC
+  - 源码分析
+---
+
+# Spring MVC HTTP 请求处理全链路
+
+> [!abstract] 一句话结论
+> Servlet 容器先把 HTTP 字节解析成 `HttpServletRequest`，随后 `DispatcherServlet` 负责总调度：`HandlerMapping` 找 Controller，`HandlerAdapter` 调 Controller，参数解析器把 HTTP 数据变成 Java 参数，返回值处理器再把 Java 返回值变成 HTTP 响应。
+
+## 阅读路线
+
+建议按下面的顺序阅读，不需要第一次就钻进所有细节：
+
+1. 先看“完整流程图”，建立整体方向；
+2. 再看“一次请求的逐方法调用链”，知道方法之间怎样衔接；
+3. 然后分别理解参数解析、返回值处理和异常处理；
+4. 最后在 Spring Framework 项目中按推荐断点单步调试。
+
+本文使用一条 REST POST 请求作为主线：
+
+```text
+POST JSON
+  -> @RestController
+  -> 参数解析与校验
+  -> Controller
+  -> ResponseEntity
+  -> JSON 响应
+```
+
+另外保留项目中的 `POST /messages -> 302 redirect` 测试，作为传统 MVC 视图链路的对照。
+
+---
+
+## 1. 先建立整体认识
+
+Spring MVC 并不是由 `DispatcherServlet` 独自完成所有工作。它负责组织流程，具体工作交给一组策略组件。
+
+| 组件 | 回答的问题 | 常见实现 |
+| --- | --- | --- |
+| `HandlerMapping` | 谁处理这个请求？ | `RequestMappingHandlerMapping` |
+| `HandlerAdapter` | 怎样调用这个处理器？ | `RequestMappingHandlerAdapter` |
+| `HandlerMethodArgumentResolver` | Controller 参数从哪里来？ | `RequestParamMethodArgumentResolver` 等 |
+| `HandlerMethodReturnValueHandler` | Controller 返回值表示什么？ | `HttpEntityMethodProcessor` 等 |
+| `HttpMessageConverter` | Java 对象和 HTTP Body 如何互转？ | `MappingJackson2HttpMessageConverter` |
+| `ViewResolver` | 逻辑视图名对应哪个 View？ | `InternalResourceViewResolver` 等 |
+| `HandlerExceptionResolver` | 异常如何转换成 HTTP 响应？ | `ExceptionHandlerExceptionResolver` |
+| `HandlerInterceptor` | Controller 前后执行什么横切逻辑？ | 自定义拦截器 |
+
+最重要的设计思想：
+
+```text
+DispatcherServlet 负责调度
+        +
+策略接口负责具体工作
+```
+
+### 1.1 Spring MVC 的边界
+
+一次请求可以分为三层：
+
+```text
+网络层
+  TCP字节、HTTP协议
+        ↓
+Servlet容器层
+  Tomcat解析请求行和请求头
+  创建HttpServletRequest、HttpServletResponse
+        ↓
+Spring MVC层
+  路由、参数解析、Controller调用、返回值处理
+```
+
+Spring MVC 不直接解析 TCP 数据包。进入 `FrameworkServlet` 时，Tomcat 已经创建好了 Servlet request 和 response。
+
+---
+
+## 2. 完整流程图
+
+```mermaid
+flowchart TD
+    A["客户端发送 HTTP 请求"] --> B["Tomcat 解析 HTTP"]
+    B --> C["Filter 过滤器链"]
+    C --> D["HttpServlet.service()"]
+    D --> E["FrameworkServlet.processRequest()"]
+    E --> F["DispatcherServlet.doService()"]
+    F --> G["DispatcherServlet.doDispatch()"]
+
+    G --> H["HandlerMapping 查找 HandlerMethod"]
+    H --> I{"找到 Controller？"}
+    I -- "否" --> I1["404"]
+    I -- "是" --> J["HandlerMethod + Interceptors"]
+
+    J --> K["选择 HandlerAdapter"]
+    K --> L["Interceptor.preHandle()"]
+    L --> M{"是否继续？"}
+    M -- "否" --> M1["终止处理"]
+    M -- "是" --> N["RequestMappingHandlerAdapter"]
+
+    N --> O["ArgumentResolver 解析参数"]
+    O --> P["数据绑定与校验"]
+    P --> Q["反射调用 Controller"]
+    Q --> R["ReturnValueHandler 处理返回值"]
+
+    R --> S{"返回值类型"}
+    S -- "ResponseEntity" --> T["HttpEntityMethodProcessor"]
+    S -- "@ResponseBody" --> U["RequestResponseBodyMethodProcessor"]
+    S -- "视图名" --> V["ViewResolver + View"]
+    S -- "redirect:" --> W["RedirectView"]
+
+    T --> X["HttpMessageConverter 写响应体"]
+    U --> X
+    V --> Y["HTML 响应"]
+    W --> Z["3xx 重定向"]
+    X --> AA["JSON/XML/文本响应"]
+
+    Y --> AB["afterCompletion()"]
+    Z --> AB
+    AA --> AB
+    AB --> AC["Filter 链返回"]
+    AC --> AD["Tomcat 返回 HTTP 响应"]
+
+    G -. "发生异常" .-> AE["HandlerExceptionResolver"]
+    AE --> AF{"异常已处理？"}
+    AF -- "是" --> R
+    AF -- "否" --> AG["异常交给 Servlet 容器"]
+```
+
+---
+
+## 3. 本文使用的请求示例
+
+### 3.1 HTTP 请求
+
+```http
+POST /api/users/42/orders?notify=true HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+Accept: application/json
+X-Request-Id: req-10001
+
+{
+  "productId": 1001,
+  "quantity": 2
+}
+```
+
+### 3.2 Controller
+
+```java
+@RestController
+@RequestMapping("/api/users")
+public class OrderController {
+
+    @PostMapping(
+            value = "/{userId}/orders",
+            consumes = "application/json",
+            produces = "application/json")
+    public ResponseEntity<OrderVO> createOrder(
+            @PathVariable Long userId,
+            @RequestParam boolean notify,
+            @RequestHeader("X-Request-Id") String requestId,
+            @Valid @RequestBody CreateOrderRequest request) {
+
+        OrderVO order = orderService.create(userId, notify, requestId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(order);
+    }
+}
+```
+
+四个参数对应四种 HTTP 数据来源：
+
+| Controller 参数 | HTTP 数据来源 |
+| --- | --- |
+| `userId` | 路径变量 `/users/42` |
+| `notify` | 查询参数 `?notify=true` |
+| `requestId` | 请求头 `X-Request-Id` |
+| `request` | JSON 请求体 |
+
+预期响应：
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 9001,
+  "userId": 42,
+  "productId": 1001,
+  "quantity": 2
+}
+```
+
+---
+
+## 4. 一次请求的逐方法调用链
+
+这一节只保留主干。参数解析、返回值和异常的内部细节在后续章节展开。
+
+### 4.1 Tomcat 与 Filter
+
+Tomcat 部分的具体类可能随版本变化，主流程如下：
+
+```java
+客户端发送HTTP字节
+    Tomcat#Http11InputBuffer#parseRequestLine()
+        // 解析：POST /api/users/42/orders?notify=true HTTP/1.1
+
+    Tomcat#Http11InputBuffer#parseHeaders()
+        // 解析Content-Type、Accept、X-Request-Id等请求头
+
+    Tomcat#CoyoteAdapter#service()
+        // 适配为ServletRequest和ServletResponse
+
+    Tomcat#StandardEngineValve#invoke()
+        Tomcat#StandardHostValve#invoke()
+            Tomcat#StandardContextValve#invoke()
+                Tomcat#StandardWrapperValve#invoke()
+                    // 根据Servlet映射找到DispatcherServlet
+
+                    ApplicationFilterChain#doFilter()
+                        CharacterEncodingFilter#doFilter()
+                            SecurityFilterChain#doFilter()
+                                业务Filter#doFilter()
+                                    HttpServlet#service(
+                                            ServletRequest,
+                                            ServletResponse)
+```
+
+> [!important]
+> Filter 在 `FrameworkServlet.doPost()` 之前执行。没有映射到 `DispatcherServlet` 的请求，也不会进入后面的 Spring MVC 链路。
+
+### 4.2 从 `service()` 到 `doPost()`
+
+```java
+HttpServlet#service(ServletRequest, ServletResponse)
+    // 校验并转换为HttpServletRequest、HttpServletResponse
+
+    FrameworkServlet#service(
+            HttpServletRequest request,
+            HttpServletResponse response)
+        // POST是标准HTTP方法，调用父类service
+
+        HttpServlet#service(
+                HttpServletRequest request,
+                HttpServletResponse response)
+            // 根据request.getMethod()分派
+
+            if ("POST".equals(request.getMethod())) {
+                doPost(request, response);
+            }
+
+            FrameworkServlet#doPost(request, response)
+                // Java多态：调用FrameworkServlet重写的doPost
+
+                FrameworkServlet#processRequest(request, response)    // ★重要
+                    // 绑定LocaleContext和RequestAttributes
+                    // 注册异步请求拦截器
+                    // 记录请求事件
+                    // 调用DispatcherServlet.doService()
+```
+
+并不是每个请求都进入 `doPost()`：
+
+| HTTP 方法 | FrameworkServlet 入口 |
+| --- | --- |
+| GET | `doGet()` |
+| POST | `doPost()` |
+| PUT | `doPut()` |
+| DELETE | `doDelete()` |
+| PATCH、非标准方法 | `service()` 直接进入 `processRequest()` |
+| OPTIONS | `doOptions()` |
+| TRACE | `doTrace()` |
+
+`doPost()` 与 `@PostMapping` 的职责不同：
+
+```text
+doPost()
+  Servlet层确认这是POST请求
+
+@PostMapping
+  Spring MVC层确定由哪个Controller方法处理
+```
+
+### 4.3 `DispatcherServlet.doDispatch()` 总控
+
+```java
+DispatcherServlet#doService(request, response)
+    // 向request暴露WebApplicationContext、LocaleResolver、
+    // FlashMapManager等Spring MVC基础对象
+
+    DispatcherServlet#doDispatch(request, response)                  // ★核心
+
+        processedRequest = checkMultipart(request);
+            // 文件上传请求可能被包装
+            // 当前JSON请求继续使用原request
+
+        mappedHandler = getHandler(processedRequest);
+            // 找到Controller方法和拦截器链
+
+        handlerAdapter = getHandlerAdapter(mappedHandler.getHandler());
+            // 找到RequestMappingHandlerAdapter
+
+        mappedHandler.applyPreHandle(request, response);
+            // 正序执行拦截器
+
+        modelAndView = handlerAdapter.handle(
+                request, response, mappedHandler.getHandler());
+            // 解析参数、调用Controller、处理返回值
+
+        mappedHandler.applyPostHandle(request, response, modelAndView);
+            // Controller正常完成后逆序执行
+
+        processDispatchResult(
+                request, response, mappedHandler,
+                modelAndView, dispatchException);
+            // 处理异常或渲染视图
+
+        mappedHandler.triggerAfterCompletion(request, response, null);
+            // 请求完成后逆序收尾
+```
+
+真实源码还处理：
+
+- Last-Modified；
+- 异步请求；
+- multipart 资源清理；
+- `Error` 和 `Exception`；
+- 默认视图名；
+- 404。
+
+### 4.4 `HandlerMapping` 查找 Controller
+
+```java
+DispatcherServlet#getHandler(request)                                // ★重要
+    // 遍历所有HandlerMapping
+
+    AbstractHandlerMapping#getHandler(request)
+
+        AbstractHandlerMethodMapping#getHandlerInternal(request)
+
+            AbstractHandlerMethodMapping#lookupHandlerMethod(
+                    "/api/users/42/orders", request)                  // ★核心
+
+                MappingRegistry#getMappingsByDirectPath()
+                    // 从启动时创建的映射注册表获取候选项
+                    // 每次请求不会重新扫描所有Controller
+
+                RequestMappingInfoHandlerMapping#getMatchingMapping()
+
+                    RequestMappingInfo#getMatchingCondition(request)
+                        RequestMethodsRequestCondition
+                            // POST是否匹配
+
+                        ParamsRequestCondition
+                            // params条件是否匹配
+
+                        HeadersRequestCondition
+                            // headers条件是否匹配
+
+                        ConsumesRequestCondition
+                            // Content-Type与consumes是否匹配
+
+                        ProducesRequestCondition
+                            // Accept与produces是否匹配
+
+                        PathPatternsRequestCondition
+                            // URL路径是否匹配
+                            // 提取userId=42
+
+                return HandlerMethod(
+                        bean   = orderController,
+                        method = createOrder(...)
+                );
+
+        AbstractHandlerMapping#getHandlerExecutionChain()
+            // 将HandlerMethod和匹配的拦截器组合
+
+            return HandlerExecutionChain(
+                    handlerMethod,
+                    interceptors
+            );
+```
+
+请求到来之前，映射已经在容器启动阶段建立：
+
+```text
+RequestMappingHandlerMapping.afterPropertiesSet()
+  -> initHandlerMethods()
+  -> detectHandlerMethods()
+  -> registerHandlerMethod()
+  -> MappingRegistry
+```
+
+因此请求阶段主要是查表和条件匹配，不是重新扫描 Controller。
+
+### 4.5 选择适配器并准备调用
+
+```java
+DispatcherServlet#getHandlerAdapter(handlerMethod)
+    RequestMappingHandlerAdapter#supports(handlerMethod)
+        // HandlerMethod由RequestMappingHandlerAdapter处理
+
+
+HandlerExecutionChain#applyPreHandle(request, response)
+    interceptor1#preHandle()
+    interceptor2#preHandle()
+    // 任意一个返回false，Controller都不会执行
+
+
+AbstractHandlerMethodAdapter#handle(request, response, handlerMethod)
+
+    RequestMappingHandlerAdapter#handleInternal(...)
+
+        RequestMappingHandlerAdapter#invokeHandlerMethod(...)         // ★核心
+
+            new ServletWebRequest(request, response)
+
+            getDataBinderFactory()
+                // 数据绑定、类型转换、校验
+
+            getModelFactory()
+                // @ModelAttribute、@SessionAttributes
+
+            new ModelAndViewContainer()
+
+            ModelFactory#initModel()
+
+            new ServletInvocableHandlerMethod(handlerMethod)
+                // 设置参数解析器和返回值处理器
+
+            ServletInvocableHandlerMethod#invokeAndHandle()
+```
+
+### 4.6 解析参数并调用 Controller
+
+```java
+ServletInvocableHandlerMethod#invokeAndHandle()
+
+    InvocableHandlerMethod#invokeForRequest()                         // ★重要
+
+        InvocableHandlerMethod#getMethodArgumentValues()              // ★核心
+            // 按Controller形参顺序生成Object[] args
+
+            HandlerMethodArgumentResolverComposite
+                #getArgumentResolver(parameter)
+                // 选择支持当前参数的解析器
+                // 解析器匹配结果会被缓存
+
+            HandlerMethodArgumentResolverComposite
+                #resolveArgument(parameter)
+                // 委托具体解析器生成Java参数
+
+        Object[] args = {
+            42L,
+            true,
+            "req-10001",
+            createOrderRequest
+        };
+
+        InvocableHandlerMethod#doInvoke(args)                         // ★核心
+
+            Method#invoke(orderController, args)
+                // 普通Java Controller的最终反射调用点
+
+                OrderController#createOrder(...)
+                    OrderService#create(...)
+                    return ResponseEntity
+                            .status(201)
+                            .body(orderVO);
+```
+
+`getMethodArgumentValues()` 与 `doInvoke()` 是非常重要的分界线：
+
+```text
+getMethodArgumentValues()
+  HTTP请求 -> Java参数
+
+doInvoke()
+  真正进入业务Controller
+```
+
+### 4.7 处理 `ResponseEntity` 并写出 JSON
+
+```java
+ServletInvocableHandlerMethod#invokeAndHandle()
+
+    HandlerMethodReturnValueHandlerComposite
+        #handleReturnValue(returnValue)                               // ★核心
+
+        HttpEntityMethodProcessor#supportsReturnType()
+            // ResponseEntity匹配成功
+
+        HttpEntityMethodProcessor#handleReturnValue()                 // ★核心
+
+            ModelAndViewContainer#setRequestHandled(true)
+                // 直接写响应，不需要ViewResolver
+
+            HttpServletResponse#setStatus(201)
+
+            AbstractMessageConverterMethodProcessor
+                #writeWithMessageConverters(orderVO, ...)
+
+                // 根据Accept、produces和返回类型进行内容协商
+
+                MappingJackson2HttpMessageConverter#canWrite()
+                    // 支持OrderVO和application/json
+
+                ResponseBodyAdvice#beforeBodyWrite()
+                    // 响应体写出前的扩展点
+
+                MappingJackson2HttpMessageConverter#write(orderVO)
+
+                    AbstractJackson2HttpMessageConverter
+                        #writeInternal(orderVO)
+
+                        ObjectWriter#writeValue(
+                                responseOutputStream,
+                                orderVO)
+                            // Java对象序列化为JSON
+
+            ServletServerHttpResponse#flush()
+
+
+RequestMappingHandlerAdapter#getModelAndView()
+    // requestHandled=true
+    return null;
+    // REST接口不进入ViewResolver
+```
+
+### 4.8 完成请求
+
+```java
+DispatcherServlet#doDispatch()
+
+    HandlerExecutionChain#applyPostHandle(
+            request, response, null)
+        // 逆序执行postHandle
+        // REST接口的ModelAndView为null
+
+    DispatcherServlet#processDispatchResult(...)
+        // ModelAndView为null，不执行render()
+
+    HandlerExecutionChain#triggerAfterCompletion(...)
+        interceptor2#afterCompletion()
+        interceptor1#afterCompletion()
+
+
+FrameworkServlet#processRequest()#finally
+    // 恢复LocaleContext和RequestAttributes
+    // 发布ServletRequestHandledEvent
+
+
+FilterChain逐层返回
+    业务Filter返回
+      -> Security Filter返回
+        -> CharacterEncodingFilter返回
+
+
+Tomcat提交HttpServletResponse
+    // 把状态码、响应头和JSON编码成HTTP字节
+    // 返回客户端
+```
+
+---
+
+## 5. 参数解析：HTTP 数据怎样变成 Java 参数
+
+### 5.1 参数解析器的统一选择机制
+
+Controller 方法的每个参数都会经过：
+
+```text
+InvocableHandlerMethod.getMethodArgumentValues()
+  -> HandlerMethodArgumentResolverComposite.getArgumentResolver()
+  -> resolver.supportsParameter()
+  -> resolver.resolveArgument()
+```
+
+常见参数与解析器：
+
+| Controller 参数 | 典型解析器 |
+| --- | --- |
+| `@PathVariable` | `PathVariableMethodArgumentResolver` |
+| `@RequestParam` | `RequestParamMethodArgumentResolver` |
+| `@RequestHeader` | `RequestHeaderMethodArgumentResolver` |
+| `@CookieValue` | `ServletCookieValueMethodArgumentResolver` |
+| `@RequestBody` | `RequestResponseBodyMethodProcessor` |
+| `@ModelAttribute`、未标注复杂对象 | `ServletModelAttributeMethodProcessor` |
+| `BindingResult` | `ErrorsMethodArgumentResolver` |
+| `RedirectAttributes` | `RedirectAttributesMethodArgumentResolver` |
+| `HttpServletRequest/Response` | `ServletRequestMethodArgumentResolver` 等 |
+| `Principal` | `PrincipalMethodArgumentResolver` |
+
+### 5.2 `@PathVariable`
+
+```java
+PathVariableMethodArgumentResolver#resolveArgument()
+
+    PathVariableMethodArgumentResolver#resolveName("userId")
+        // 从URI模板变量Map取得"42"
+
+    WebDataBinder#convertIfNecessary("42", Long.class)
+        // String转Long
+
+    return 42L;
+```
+
+### 5.3 `@RequestParam`
+
+```java
+RequestParamMethodArgumentResolver#resolveArgument()
+
+    RequestParamMethodArgumentResolver#resolveName("notify")
+        // request.getParameterValues("notify")
+
+    WebDataBinder#convertIfNecessary("true", boolean.class)
+
+    return true;
+```
+
+### 5.4 `@RequestHeader`
+
+```java
+RequestHeaderMethodArgumentResolver#resolveArgument()
+
+    RequestHeaderMethodArgumentResolver
+        #resolveName("X-Request-Id")
+        // request.getHeaderValues(...)
+
+    return "req-10001";
+```
+
+### 5.5 `@RequestBody` JSON 反序列化
+
+```java
+RequestResponseBodyMethodProcessor#resolveArgument()                  // ★核心
+
+    RequestResponseBodyMethodProcessor#readWithMessageConverters()
+
+        AbstractMessageConverterMethodArgumentResolver
+            #readWithMessageConverters()
+
+            contentType = application/json;
+
+            for (HttpMessageConverter converter : converters) {
+                converter#canRead(targetType, contentType);
+            }
+
+            MappingJackson2HttpMessageConverter#canRead()
+                // 匹配CreateOrderRequest和application/json
+
+            RequestBodyAdvice#beforeBodyRead()
+
+            MappingJackson2HttpMessageConverter#read()
+
+                AbstractJackson2HttpMessageConverter#readJavaType()
+
+                    ObjectMapper#reader()
+                        #forType(CreateOrderRequest.class)
+
+                    ObjectReader#readValue(requestInputStream)
+                        // JSON -> CreateOrderRequest
+
+            RequestBodyAdvice#afterBodyRead()
+```
+
+`Content-Type` 决定请求体采用哪种格式读取：
+
+```text
+application/json
+  -> Jackson JSON转换器
+
+text/plain
+  -> String转换器
+
+application/xml
+  -> XML转换器，需要相关依赖
+```
+
+### 5.6 数据绑定与校验
+
+`@Valid @RequestBody` 在反序列化之后执行校验：
+
+```text
+JSON反序列化
+  -> CreateOrderRequest
+  -> WebDataBinderFactory.createBinder()
+  -> validateIfApplicable()
+  -> Validator.validate()
+  -> BindingResult
+```
+
+校验失败通常抛出：
+
+```text
+MethodArgumentNotValidException
+```
+
+对于 `@ModelAttribute` 或未标注的复杂表单对象：
+
+```text
+创建Java对象
+  -> 绑定请求参数
+  -> 类型转换
+  -> 执行@InitBinder配置
+  -> 执行Validator
+  -> BindingResult
+```
+
+> [!warning]
+> 请求体输入流通常只能读取一次。日志 Filter 如果提前读取 Body，需要使用可缓存的 request 包装器，否则 `@RequestBody` 可能读不到内容。
+
+---
+
+## 6. 返回值处理：Java 返回值怎样变成 HTTP 响应
+
+统一入口：
+
+```text
+ServletInvocableHandlerMethod.invokeAndHandle()
+  -> HandlerMethodReturnValueHandlerComposite.handleReturnValue()
+  -> selectHandler()
+  -> 具体ReturnValueHandler.handleReturnValue()
+```
+
+### 6.1 `ResponseEntity`
+
+```java
+return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .header("X-Order-Id", "9001")
+        .body(orderVO);
+```
+
+处理器：
+
+```text
+HttpEntityMethodProcessor
+```
+
+它可以控制：
+
+- HTTP 状态码；
+- HTTP 响应头；
+- HTTP 响应体。
+
+### 6.2 `@ResponseBody`
+
+```java
+@GetMapping("/orders/{id}")
+@ResponseBody
+public OrderVO getOrder(@PathVariable Long id) {
+    return orderService.find(id);
+}
+```
+
+处理链：
+
+```text
+RequestResponseBodyMethodProcessor.handleReturnValue()
+  -> 内容协商
+  -> HttpMessageConverter
+  -> Java对象序列化
+  -> HttpServletResponse
+```
+
+`@RestController` 等价于：
+
+```text
+@Controller
+  +
+类级别的@ResponseBody
+```
+
+### 6.3 逻辑视图名
+
+```java
+@Controller
+public class OrderPageController {
+
+    @GetMapping("/orders")
+    public String list(Model model) {
+        model.addAttribute("orders", orderService.findAll());
+        return "orders/list";
+    }
+}
+```
+
+处理链：
+
+```text
+ViewNameMethodReturnValueHandler
+  -> ModelAndView
+  -> DispatcherServlet.render()
+  -> ViewResolver.resolveViewName()
+  -> View.render()
+  -> HTML响应
+```
+
+### 6.4 `redirect:`
+
+```java
+return "redirect:/messages/{id}";
+```
+
+处理链：
+
+```text
+ViewNameMethodReturnValueHandler
+  -> ModelAndView中保存重定向视图名
+  -> ViewResolver
+  -> RedirectView
+  -> 展开URI模板变量
+  -> 追加查询参数
+  -> 保存FlashMap
+  -> 3xx响应
+```
+
+### 6.5 容易混淆的 String 返回值
+
+```text
+@Controller
+  返回String
+  -> 通常作为视图名
+
+@RestController 或 @ResponseBody
+  返回String
+  -> 通常作为响应体
+```
+
+### 6.6 REST 与 MVC 页面在哪里分叉
+
+```text
+共同主链路
+DispatcherServlet
+  -> HandlerMapping
+  -> RequestMappingHandlerAdapter
+  -> 参数解析
+  -> Controller
+        |
+        +-- REST
+        |     -> ReturnValueHandler
+        |     -> HttpMessageConverter
+        |     -> JSON/XML/文本
+        |
+        +-- MVC页面
+              -> ModelAndView
+              -> ViewResolver
+              -> View.render()
+              -> HTML
+```
+
+真正的分叉点是返回值处理阶段，而不是 Controller 调用之前。
+
+---
+
+## 7. 异常处理链路
+
+`doDispatch()` 捕获参数解析、Controller 和返回值处理中的异常：
+
+```java
+DispatcherServlet#doDispatch()
+    try {
+        // 查找并调用Controller
+    }
+    catch (Exception ex) {
+        dispatchException = ex;
+    }
+
+    DispatcherServlet#processDispatchResult(
+            request, response, handlerChain,
+            modelAndView, dispatchException)
+
+        DispatcherServlet#processHandlerException()                   // ★异常入口
+
+            ExceptionHandlerExceptionResolver#resolveException()
+                // @ExceptionHandler
+                // @ControllerAdvice
+
+            ResponseStatusExceptionResolver#resolveException()
+                // @ResponseStatus
+                // ResponseStatusException
+
+            DefaultHandlerExceptionResolver#resolveException()
+                // Spring MVC内置异常
+```
+
+### 7.1 `@ExceptionHandler`
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handle(
+            OrderNotFoundException ex) {
+
+        ProblemDetail detail =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        detail.setDetail(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
+    }
+}
+```
+
+`@ExceptionHandler` 方法本身也会使用：
+
+- 参数解析器；
+- `ServletInvocableHandlerMethod`；
+- 返回值处理器；
+- `HttpMessageConverter`。
+
+### 7.2 常见异常与状态码
+
+| 场景 | 异常 | 常见状态码 |
+| --- | --- | --- |
+| JSON 语法错误 | `HttpMessageNotReadableException` | 400 |
+| `@Valid` 校验失败 | `MethodArgumentNotValidException` | 400 |
+| 请求参数类型转换失败 | `MethodArgumentTypeMismatchException` | 400 |
+| 缺少请求参数 | `MissingServletRequestParameterException` | 400 |
+| Content-Type 不支持 | `HttpMediaTypeNotSupportedException` | 415 |
+| 无法满足 Accept | `HttpMediaTypeNotAcceptableException` | 406 |
+| 没有匹配的 Handler | 404 处理流程 | 404 |
+
+如果没有任何 `HandlerExceptionResolver` 能处理异常，异常会继续抛给 Servlet 容器。
+
+---
+
+## 8. Interceptor 与 Filter
+
+### 8.1 两者位置不同
+
+```text
+客户端
+  -> Filter
+    -> DispatcherServlet
+      -> Interceptor.preHandle
+        -> Controller
+      <- Interceptor.postHandle
+      <- Interceptor.afterCompletion
+    <- DispatcherServlet
+  <- Filter
+```
+
+| 对比项 | Filter | HandlerInterceptor |
+| --- | --- | --- |
+| 所属体系 | Servlet | Spring MVC |
+| 执行位置 | DispatcherServlet 外部 | HandlerAdapter 调用前后 |
+| 是否知道 HandlerMethod | 通常不知道 | 知道 |
+| 常见用途 | 编码、安全、跨域、请求包装 | 权限、埋点、Controller 日志 |
+
+### 8.2 三个拦截器方法的顺序
+
+假设注册 A、B 两个拦截器：
+
+```text
+A.preHandle()
+  -> B.preHandle()
+    -> Controller
+  <- B.postHandle()
+<- A.postHandle()
+  -> 响应处理或视图渲染
+<- B.afterCompletion()
+<- A.afterCompletion()
+```
+
+规律：
+
+- `preHandle()`：正序；
+- `postHandle()`：逆序，只在同步 Controller 正常完成后调用；
+- `afterCompletion()`：逆序，用于最终清理；
+- 异步请求会进入专门的异步处理分支。
+
+---
+
+## 9. 项目中的真实 POST 重定向链路
+
+Spring Framework 当前项目中有一条适合调试传统 MVC 返回值的测试：
+
+```text
+spring-webmvc/src/test/java/org/springframework/web/servlet/mvc/method/annotation/
+ServletAnnotationControllerHandlerMethodTests.java
+```
+
+测试方法：
+
+```text
+redirectAttribute(boolean usePathPatterns)
+```
+
+成功请求：
+
+```http
+POST /messages
+Content-Type: application/x-www-form-urlencoded
+
+name=Jeff
+```
+
+Controller：
+
+```java
+@Controller
+static class RedirectAttributesController {
+
+    @InitBinder
+    public void initBinder(WebDataBinder dataBinder) {
+        dataBinder.setRequiredFields("name");
+    }
+
+    @PostMapping("/messages")
+    public String sendMessage(
+            TestBean testBean,
+            BindingResult result,
+            RedirectAttributes attributes) {
+
+        if (result.hasErrors()) {
+            return "messages/new";
+        }
+
+        attributes.addAttribute("id", "1")
+                .addAttribute("name", "value");
+        attributes.addFlashAttribute("successMessage", "yay!");
+
+        return "redirect:/messages/{id}";
+    }
+}
+```
+
+调用链：
+
+```text
+POST /messages，name=Jeff
+  -> DispatcherServlet.doDispatch()
+  -> RequestMappingHandlerMapping
+  -> sendMessage(...)
+  -> RequestMappingHandlerAdapter
+  -> ServletModelAttributeMethodProcessor
+       创建TestBean并绑定name=Jeff
+  -> ErrorsMethodArgumentResolver
+       获取BindingResult
+  -> RedirectAttributesMethodArgumentResolver
+       创建RedirectAttributes
+  -> InvocableHandlerMethod.doInvoke()
+  -> Controller返回redirect:/messages/{id}
+  -> ViewNameMethodReturnValueHandler
+  -> ModelAndView
+  -> DispatcherServlet.render()
+  -> RedirectView
+       展开id=1
+       追加name=value
+       保存Flash属性successMessage=yay!
+  -> 302 Location: /messages/1?name=value
+```
+
+这里：
+
+- `id=1` 用于展开 `/messages/{id}`；
+- `name=value` 被追加到查询字符串；
+- `successMessage=yay!` 保存为 Flash 属性，不出现在 URL；
+- 重定向后的下一次 GET 请求可以读取 Flash 属性。
+
+使用 JDK 21 运行该测试：
+
+```bash
+JAVA_HOME=/opt/homebrew/Cellar/openjdk@21/21.0.9/libexec/openjdk.jdk/Contents/Home \
+./gradlew :spring-webmvc:test \
+  --tests 'org.springframework.web.servlet.mvc.method.annotation.ServletAnnotationControllerHandlerMethodTests.redirectAttribute' \
+  --no-daemon
+```
+
+---
+
+## 10. 推荐断点与源码地图
+
+### 10.1 第一遍：只看主流程
+
+1. `FrameworkServlet.processRequest()`
+2. `DispatcherServlet.doService()`
+3. `DispatcherServlet.doDispatch()`
+4. `DispatcherServlet.getHandler()`
+5. `DispatcherServlet.getHandlerAdapter()`
+6. `RequestMappingHandlerAdapter.invokeHandlerMethod()`
+7. `InvocableHandlerMethod.doInvoke()`
+8. Controller 方法
+9. `HandlerMethodReturnValueHandlerComposite.handleReturnValue()`
+10. `DispatcherServlet.processDispatchResult()`
+
+### 10.2 第二遍：深入 HandlerMapping
+
+```text
+DispatcherServlet.getHandler()
+  -> AbstractHandlerMapping.getHandler()
+  -> AbstractHandlerMethodMapping.getHandlerInternal()
+  -> AbstractHandlerMethodMapping.lookupHandlerMethod()
+  -> RequestMappingInfo.getMatchingCondition()
+```
+
+重点观察：
+
+- lookupPath；
+- directPathMatches；
+- matches；
+- 最终 HandlerMethod；
+- HandlerExecutionChain。
+
+### 10.3 第三遍：深入参数解析
+
+```text
+InvocableHandlerMethod.getMethodArgumentValues()
+  -> HandlerMethodArgumentResolverComposite.getArgumentResolver()
+  -> 具体Resolver.resolveArgument()
+```
+
+如果调试 `@RequestBody`：
+
+```text
+RequestResponseBodyMethodProcessor.resolveArgument()
+  -> readWithMessageConverters()
+  -> MappingJackson2HttpMessageConverter
+  -> AbstractJackson2HttpMessageConverter.readJavaType()
+  -> ObjectReader.readValue()
+```
+
+### 10.4 第四遍：深入返回值
+
+`ResponseEntity`：
+
+```text
+HandlerMethodReturnValueHandlerComposite.handleReturnValue()
+  -> HttpEntityMethodProcessor.handleReturnValue()
+  -> writeWithMessageConverters()
+  -> AbstractJackson2HttpMessageConverter.writeInternal()
+```
+
+视图：
+
+```text
+ViewNameMethodReturnValueHandler
+  -> ModelAndView
+  -> DispatcherServlet.render()
+  -> ViewResolver
+  -> View.render()
+```
+
+### 10.5 核心源码文件
+
+```text
+spring-webmvc/src/main/java/org/springframework/web/servlet/
+FrameworkServlet.java
+  -> service()
+  -> doPost()
+  -> processRequest()
+
+spring-webmvc/src/main/java/org/springframework/web/servlet/
+DispatcherServlet.java
+  -> doService()
+  -> doDispatch()
+  -> getHandler()
+  -> getHandlerAdapter()
+  -> processDispatchResult()
+  -> processHandlerException()
+  -> render()
+
+spring-webmvc/src/main/java/org/springframework/web/servlet/handler/
+AbstractHandlerMethodMapping.java
+  -> lookupHandlerMethod()
+
+spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/
+RequestMappingHandlerAdapter.java
+  -> invokeHandlerMethod()
+
+spring-web/src/main/java/org/springframework/web/method/support/
+InvocableHandlerMethod.java
+  -> getMethodArgumentValues()
+  -> doInvoke()
+
+spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/
+RequestResponseBodyMethodProcessor.java
+  -> resolveArgument()
+  -> handleReturnValue()
+
+spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/
+HttpEntityMethodProcessor.java
+  -> handleReturnValue()
+```
+
+---
+
+## 11. 阅读源码时的五个问题
+
+每进入一个方法，问自己：
+
+1. 当前输入是什么？
+2. 当前输出是什么？
+3. 它是在选择策略，还是执行策略？
+4. 正常分支和异常分支在哪里分开？
+5. 当前数据放在 request、`ModelAndViewContainer`、`ModelAndView`，还是 response？
+
+例如：
+
+```text
+HandlerMapping
+  输入：HttpServletRequest
+  输出：HandlerExecutionChain
+  行为：选择策略
+
+ArgumentResolver
+  输入：MethodParameter + NativeWebRequest
+  输出：一个Java参数值
+  行为：执行参数解析策略
+
+ReturnValueHandler
+  输入：Controller返回值
+  输出：ModelAndViewContainer变化或HTTP响应
+  行为：执行返回值处理策略
+```
+
+---
+
+## 12. 常见疑问
+
+### 12.1 `FrameworkServlet.doPost()` 是请求的第一个方法吗？
+
+不是。POST 请求到达它之前已经经过：
+
+```text
+Tomcat
+  -> FilterChain
+  -> HttpServlet.service(ServletRequest, ServletResponse)
+  -> FrameworkServlet.service(HttpServletRequest, HttpServletResponse)
+  -> HttpServlet.service(HttpServletRequest, HttpServletResponse)
+  -> FrameworkServlet.doPost()
+```
+
+直接调用 `doPost()` 的是父类 `HttpServlet.service(HttpServletRequest, HttpServletResponse)`。
+
+### 12.2 为什么需要 HandlerAdapter？
+
+因为 `DispatcherServlet` 要支持不同形式的 Handler。适配器把不同调用方式统一成：
+
+```java
+ModelAndView handle(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        Object handler);
+```
+
+`DispatcherServlet` 不需要知道 Controller 参数如何解析、方法如何反射调用。
+
+### 12.3 为什么 HandlerMapping 不直接调用 Controller？
+
+它的职责只负责查找。查找和执行分离后：
+
+- 路由策略可以独立替换；
+- 调用方式可以独立扩展；
+- 拦截器可以插入两者之间；
+- `DispatcherServlet` 保持简单。
+
+### 12.4 REST 接口为什么没有 `ModelAndView`？
+
+`@ResponseBody` 或 `ResponseEntity` 的返回值处理器会：
+
+```java
+mavContainer.setRequestHandled(true);
+```
+
+表示响应已经直接写入 `HttpServletResponse`。随后 `getModelAndView()` 返回 `null`，因此不会执行 `ViewResolver`。
+
+### 12.5 `Content-Type` 和 `Accept` 有什么区别？
+
+```text
+Content-Type
+  描述客户端发送的请求体格式
+  影响consumes和读取请求体的HttpMessageConverter
+
+Accept
+  描述客户端希望接收的响应格式
+  影响produces和写响应体的HttpMessageConverter
+```
+
+---
+
+## 13. 最终记忆版
+
+### 13.1 一条链路
+
+```text
+Tomcat解析HTTP
+  -> FilterChain
+  -> HttpServlet.service()
+  -> FrameworkServlet.doPost()
+  -> FrameworkServlet.processRequest()
+  -> DispatcherServlet.doService()
+  -> DispatcherServlet.doDispatch()
+  -> HandlerMapping找Controller
+  -> HandlerAdapter准备调用
+  -> ArgumentResolver解析参数
+  -> HttpMessageConverter读取请求体
+  -> Method.invoke()调用Controller
+  -> ReturnValueHandler处理返回值
+  -> HttpMessageConverter写响应体
+     或ViewResolver渲染视图
+  -> ExceptionResolver处理异常
+  -> Interceptor和Filter收尾
+  -> Tomcat返回HTTP响应
+```
+
+### 13.2 三个最重要的方法
+
+| 方法 | 记忆点 |
+| --- | --- |
+| `DispatcherServlet.doDispatch()` | 一次请求的总流程 |
+| `InvocableHandlerMethod.getMethodArgumentValues()` | HTTP 请求怎样变成 Java 参数 |
+| `HandlerMethodReturnValueHandlerComposite.handleReturnValue()` | Java 返回值怎样变成 HTTP 响应 |
+
+### 13.3 三个最重要的分界线
+
+```text
+HandlerMapping -> HandlerAdapter
+  从“找到谁”进入“怎样调用”
+
+getMethodArgumentValues() -> doInvoke()
+  从“准备参数”进入“执行业务”
+
+Controller返回 -> ReturnValueHandler
+  从“Java返回值”进入“HTTP响应”
+```
