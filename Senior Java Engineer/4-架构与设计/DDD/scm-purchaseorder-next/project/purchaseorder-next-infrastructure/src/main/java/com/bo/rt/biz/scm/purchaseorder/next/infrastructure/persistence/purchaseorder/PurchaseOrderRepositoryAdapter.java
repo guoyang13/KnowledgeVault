@@ -1,8 +1,10 @@
 package com.bo.rt.biz.scm.purchaseorder.next.infrastructure.persistence.purchaseorder;
 
-import com.bo.rt.biz.scm.purchaseorder.next.domain.purchaseorder.model.PurchaseOrder;
-import com.bo.rt.biz.scm.purchaseorder.next.domain.purchaseorder.repository.PurchaseOrderRepository;
+import com.bo.rt.biz.scm.purchaseorder.next.domain.ordering.model.PurchaseOrder;
+import com.bo.rt.biz.scm.purchaseorder.next.domain.ordering.repository.PurchaseOrderRepository;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 采购订单仓储适配器。
@@ -11,6 +13,11 @@ import java.util.Optional;
  */
 public class PurchaseOrderRepositoryAdapter implements PurchaseOrderRepository {
 
+    /** 按聚合标识保存的演示数据。 */
+    private final Map<String, PurchaseOrder> byId = new ConcurrentHashMap<>();
+    /** 采购订单号到聚合标识的唯一索引。 */
+    private final Map<String, String> idByOrderNo = new ConcurrentHashMap<>();
+
     /**
      * 保存采购订单聚合。
      *
@@ -18,17 +25,19 @@ public class PurchaseOrderRepositoryAdapter implements PurchaseOrderRepository {
      */
     @Override
     public void save(PurchaseOrder purchaseOrder) {
-        throw new UnsupportedOperationException("骨架工程仅表达仓储适配边界，待补充持久化实现。");
+        byId.put(purchaseOrder.id(), purchaseOrder);
+        idByOrderNo.put(purchaseOrder.orderNo(), purchaseOrder.id());
     }
 
-    /**
-     * 根据采购订单号查询聚合。
-     *
-     * @param purchaseOrderCode 采购订单号
-     * @return 采购订单聚合；不存在时返回空
-     */
+    /** 按采购订单标识查询聚合。 */
     @Override
-    public Optional<PurchaseOrder> findByCode(String purchaseOrderCode) {
-        throw new UnsupportedOperationException("骨架工程仅表达仓储适配边界，待补充持久化实现。");
+    public Optional<PurchaseOrder> findById(String purchaseOrderId) {
+        return Optional.ofNullable(byId.get(purchaseOrderId));
+    }
+
+    /** 按采购订单号的唯一索引查询聚合。 */
+    @Override
+    public Optional<PurchaseOrder> findByOrderNo(String orderNo) {
+        return Optional.ofNullable(idByOrderNo.get(orderNo)).map(byId::get);
     }
 }

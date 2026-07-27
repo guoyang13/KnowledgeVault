@@ -13,6 +13,9 @@ public class PurchaseOrderNextApplication {
      * @param args 启动参数
      */
     public static void main(String[] args) {
-        throw new UnsupportedOperationException("骨架工程仅表达启动入口，待接入公司服务启动框架。");
+        System.out.println(
+                "scm-purchaseorder-next pseudocode is ready; "
+                        + "wire the application services with the company Spring Boot starter."
+        );
     }
 }

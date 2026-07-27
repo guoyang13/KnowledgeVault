@@ -3,15 +3,29 @@ package com.bo.rt.biz.scm.purchaseorder.next.application.purchaseorder.port;
 /**
  * 供应商档案端口。
  *
- * <p>应用层通过该端口校验供应商是否存在、是否可合作。</p>
+ * <p>应用层通过该端口取得供应商准入和路线计算所需的可信快照。</p>
  */
 public interface SupplierProfilePort {
 
     /**
-     * 判断供应商是否允许创建采购订单。
+     * 读取创建采购订单所需的供应商快照。
      *
      * @param supplierCode 供应商编码
-     * @return 允许创建时返回 true，否则返回 false
+     * @return 供应商下单与所在地快照
      */
-    boolean canCreatePurchaseOrder(String supplierCode);
+    SupplierOrderingProfile getOrderingProfile(String supplierCode);
+
+    /**
+     * 供应商下单快照。
+     *
+     * @param supplierCode 供应商编码
+     * @param countryCode 供应商税源地或实际发货主体所在国家/地区
+     * @param orderAllowed 当前是否允许创建采购订单
+     */
+    record SupplierOrderingProfile(
+            String supplierCode,
+            String countryCode,
+            boolean orderAllowed
+    ) {
+    }
 }

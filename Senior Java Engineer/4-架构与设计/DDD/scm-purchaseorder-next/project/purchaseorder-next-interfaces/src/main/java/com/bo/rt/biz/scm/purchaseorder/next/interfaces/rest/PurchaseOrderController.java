@@ -1,5 +1,6 @@
 package com.bo.rt.biz.scm.purchaseorder.next.interfaces.rest;
 
+import com.bo.rt.biz.scm.purchaseorder.next.api.PurchaseOrderFacade;
 import com.bo.rt.biz.scm.purchaseorder.next.api.dto.CreatePurchaseOrderRequest;
 import com.bo.rt.biz.scm.purchaseorder.next.api.dto.PurchaseOrderResponse;
 
@@ -10,6 +11,14 @@ import com.bo.rt.biz.scm.purchaseorder.next.api.dto.PurchaseOrderResponse;
  */
 public class PurchaseOrderController {
 
+    /** 采购订单对外契约。 */
+    private final PurchaseOrderFacade facade;
+
+    /** 注入采购订单门面。 */
+    public PurchaseOrderController(PurchaseOrderFacade facade) {
+        this.facade = facade;
+    }
+
     /**
      * 创建采购订单草稿。
      *
@@ -17,6 +26,6 @@ public class PurchaseOrderController {
      * @return 采购订单响应
      */
     public PurchaseOrderResponse createDraft(CreatePurchaseOrderRequest request) {
-        throw new UnsupportedOperationException("骨架工程仅表达 REST 入口边界，待补充协议转换实现。");
+        return facade.createDraft(request);
     }
 }

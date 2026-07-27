@@ -22,5 +22,9 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>purchaseorder-next-application</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>purchaseorder-next-infrastructure</artifactId>
+        </dependency>
     </dependencies>
 </project>

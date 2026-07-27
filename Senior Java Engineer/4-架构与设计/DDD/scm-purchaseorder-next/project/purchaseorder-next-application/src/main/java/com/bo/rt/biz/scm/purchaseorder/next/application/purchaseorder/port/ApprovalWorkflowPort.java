@@ -11,6 +11,8 @@ public interface ApprovalWorkflowPort {
      * 为采购订单发起审批流程。
      *
      * @param purchaseOrderCode 采购订单号
+     * @param submittedOrderVersion 提交审批时的订单版本
+     * @return 审批实例 ID
      */
-    void startPurchaseOrderApproval(String purchaseOrderCode);
+    String startPurchaseOrderApproval(String purchaseOrderCode, long submittedOrderVersion);
 }

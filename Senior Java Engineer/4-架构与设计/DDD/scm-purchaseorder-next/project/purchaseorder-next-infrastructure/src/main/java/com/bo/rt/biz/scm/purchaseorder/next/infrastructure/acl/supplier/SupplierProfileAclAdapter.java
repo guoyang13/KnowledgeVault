@@ -1,20 +1,31 @@
 package com.bo.rt.biz.scm.purchaseorder.next.infrastructure.acl.supplier;
 
 import com.bo.rt.biz.scm.purchaseorder.next.application.purchaseorder.port.SupplierProfilePort;
+import java.util.function.Function;
 
 /**
  * 供应商服务防腐层适配器。
  */
 public class SupplierProfileAclAdapter implements SupplierProfilePort {
 
+    /** 远程供应商服务到应用层供应商快照的转换函数。 */
+    private final Function<String, SupplierOrderingProfile> remoteProfileQuery;
+
+    /** 注入远程供应商服务调用实现。 */
+    public SupplierProfileAclAdapter(
+            Function<String, SupplierOrderingProfile> remoteProfileQuery
+    ) {
+        this.remoteProfileQuery = remoteProfileQuery;
+    }
+
     /**
-     * 判断供应商是否允许创建采购订单。
+     * 读取并转换供应商下单与所在地快照。
      *
      * @param supplierCode 供应商编码
-     * @return 允许创建时返回 true，否则返回 false
+     * @return 供应商下单快照
      */
     @Override
-    public boolean canCreatePurchaseOrder(String supplierCode) {
-        throw new UnsupportedOperationException("骨架工程仅表达供应商防腐层边界，待补充外部调用实现。");
+    public SupplierOrderingProfile getOrderingProfile(String supplierCode) {
+        return remoteProfileQuery.apply(supplierCode);
     }
 }
